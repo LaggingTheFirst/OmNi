@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  omni:
+    build: .
+    container_name: omni_app
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      # Persist the database and uploads
+      - omni_data:/app/instance
+      - omni_uploads:/app/uploads
+    environment:
+      - SECRET_KEY=change_this_to_a_random_secure_string
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=admin
+
+volumes:
+  omni_data:
+  omni_uploads:

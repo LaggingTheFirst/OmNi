@@ -1,0 +1,357 @@
+import os
+import socket
+import qrcode
+from io import BytesIO
+from flask import Blueprint, render_template, request, redirect, url_for, flash, send_from_directory, current_app, abort, send_file
+from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
+from datetime import datetime, timedelta
+from app.models import File, User, Log, Folder
+from app.extensions import db, bcrypt
+from app.utils import log_action
+from functools import wraps
+
+bp = Blueprint('main', __name__)
+
+@bp.before_app_request
+def before_request():
+    if current_user.is_authenticated:
+        current_user.last_seen = datetime.utcnow()
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+
+@bp.route('/')
+def index():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.dashboard'))
+    return redirect(url_for('auth.login'))
+
+@bp.route('/qrcode')
+@login_required
+def generate_qr():
+    # Get the server's local IP
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        local_ip = s.getsockname()[0]
+        s.close()
+    except:
+        local_ip = "127.0.0.1"
+    
+    url = f"http://{local_ip}:{current_app.config.get('PORT', 5000)}"
+    
+    # Generate QR code
+    qr = qrcode.QRCode(version=1, box_size=10, border=4)
+    qr.add_data(url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    # Save to BytesIO instead of file
+    buf = BytesIO()
+    img.save(buf, format='PNG')
+    buf.seek(0)
+    
+    return send_file(buf, mimetype='image/png')
+
+@bp.route('/sw.js')
+def service_worker():
+    return send_from_directory(os.path.join(current_app.root_path, 'static'), 'sw.js')
+
+@bp.route('/manifest.json')
+def manifest():
+    return send_from_directory(os.path.join(current_app.root_path, 'static'), 'manifest.json')
+
+@bp.route('/dashboard')
+@login_required
+def dashboard():
+    folder_id = request.args.get('folder_id', type=int)
+    current_folder = None
+    
+    if folder_id:
+        current_folder = Folder.query.get_or_404(folder_id)
+        # Ensure user can access this folder: Owner OR Public OR Admin
+        if current_folder.user_id != current_user.id and not current_folder.is_public and not current_user.is_admin:
+             abort(403)
+             
+        # Breadcrumbs (simple: just Parent -> Current)
+        # For full breadcrumb, we'd need recursion, but let's stick to simple parent link
+    
+    # Files
+    files_query = File.query.filter(
+        (File.folder_id == folder_id) &
+        (
+            (File.is_public == True) | 
+            (File.user_id == current_user.id) |
+            (File.shared_with.any(User.id == current_user.id)) |
+            (current_user.is_admin == True)
+        )
+    )
+    
+    # Folders visibility logic
+    if current_user.is_admin:
+        # Admin sees ALL folders in this parent
+        folders_query = Folder.query.filter_by(parent_id=folder_id)
+    else:
+        # Standard user: Own folders OR Public folders
+        folders_query = Folder.query.filter(
+            (Folder.parent_id == folder_id) &
+            (
+                (Folder.user_id == current_user.id) |
+                (Folder.is_public == True)
+            )
+        )
+
+    files = files_query.order_by(File.upload_time.desc()).all()
+    folders = folders_query.order_by(Folder.name.asc()).all()
+    
+    return render_template('dashboard.html', files=files, folders=folders, current_folder=current_folder)
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_admin:
+            flash('You do not have permission to access this page.', 'danger')
+            return redirect(url_for('main.dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+@bp.route('/admin')
+@login_required
+@admin_required
+def admin_dashboard():
+    users = User.query.all()
+    logs = Log.query.order_by(Log.timestamp.desc()).limit(50).all()
+    files_count = File.query.count()
+    
+    # Active users in last 24h
+    cutoff = datetime.utcnow() - timedelta(hours=24)
+    active_users_count = User.query.filter(User.last_seen >= cutoff).count()
+    
+    return render_template('admin_dashboard.html', 
+                         users=users, 
+                         logs=logs, 
+                         total_files=files_count, 
+                         active_users_count=active_users_count)
+
+@bp.route('/admin/create_user', methods=['POST'])
+@login_required
+@admin_required
+def create_user():
+    username = request.form.get('username')
+    password = request.form.get('password')
+    is_admin = request.form.get('is_admin') == 'on'
+    
+    # Validation
+    if not username or not password:
+        flash('Username and password are required.', 'danger')
+        return redirect(url_for('main.admin_dashboard'))
+    
+    # Normalize username
+    username = username.lower()
+        
+    if User.query.filter_by(username=username).first():
+        flash('Username already exists.', 'warning')
+        return redirect(url_for('main.admin_dashboard'))
+    
+    # Create User
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+    new_user = User(username=username, password_hash=hashed_password, is_admin=is_admin)
+    
+    db.session.add(new_user)
+    log_action('CREATE_USER', f'Admin {current_user.username} created user {username} (Admin: {is_admin})', current_user)
+    db.session.commit()
+    
+    flash(f'User {username} created successfully.', 'success')
+    return redirect(url_for('main.admin_dashboard'))
+
+@bp.route('/admin/user/<int:user_id>/block', methods=['POST'])
+@login_required
+@admin_required
+def block_user(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.is_admin:
+        flash('Cannot block an admin.', 'warning')
+        return redirect(url_for('main.admin_dashboard'))
+        
+    user.is_blocked = True
+    log_action('BLOCK_USER', f'User {user.username} blocked by {current_user.username}')
+    db.session.commit()
+    flash(f'User {user.username} has been blocked.', 'success')
+    return redirect(url_for('main.admin_dashboard'))
+
+@bp.route('/admin/user/<int:user_id>/unblock', methods=['POST'])
+@login_required
+@admin_required
+def unblock_user(user_id):
+    user = User.query.get_or_404(user_id)
+    user.is_blocked = False
+    log_action('UNBLOCK_USER', f'User {user.username} unblocked by {current_user.username}')
+    db.session.commit()
+    flash(f'User {user.username} has been unblocked.', 'success')
+    return redirect(url_for('main.admin_dashboard'))
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
+
+@bp.route('/upload', methods=['POST'])
+@login_required
+def upload_file():
+    if 'files[]' not in request.files:
+        flash('No file part', 'danger')
+        return redirect(request.url)
+    
+    files = request.files.getlist('files[]')
+    is_public = request.form.get('is_public') == 'true'
+    
+    for file in files:
+        if file.filename == '':
+            continue
+            
+        if file and allowed_file(file.filename):
+            original_filename = secure_filename(file.filename)
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            filename = f"{timestamp}_{original_filename}"
+            
+            file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+            
+            try:
+                file.save(file_path)
+                
+                new_file = File(
+                    filename=filename,
+                    original_name=original_filename,
+                    file_type=original_filename.rsplit('.', 1)[1].lower(),
+                    size=os.path.getsize(file_path),
+                    user_id=current_user.id,
+                    is_public=is_public,
+                    folder_id=request.form.get('folder_id', type=int) # Capture folder
+                )
+                db.session.add(new_file)
+                
+                # Log upload
+                log_action('UPLOAD', f'User {current_user.username} uploaded {original_filename} (Public: {is_public})', current_user)
+                
+                db.session.commit()
+                flash(f'File {original_filename} uploaded successfully!', 'success')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error uploading {original_filename}: {str(e)}', 'danger')
+        else:
+            flash(f'File type not allowed: {file.filename}', 'warning')
+
+    return redirect(url_for('main.dashboard'))
+
+@bp.route('/create_folder', methods=['POST'])
+@login_required
+def create_folder():
+    name = request.form.get('name')
+    parent_id = request.form.get('parent_id', type=int) # Nullable
+    
+    if not name:
+        flash('Folder name is required.', 'danger')
+        return redirect(url_for('main.dashboard', folder_id=parent_id if parent_id else None))
+        
+    # Check duplicate
+    if Folder.query.filter_by(user_id=current_user.id, parent_id=parent_id, name=name).first():
+        flash('Folder with this name already exists.', 'warning')
+        return redirect(url_for('main.dashboard', folder_id=parent_id if parent_id else None))
+
+    is_public = request.form.get('is_public') == 'on'
+
+    folder = Folder(name=name, user_id=current_user.id, parent_id=parent_id, is_public=is_public)
+    db.session.add(folder)
+    log_action('CREATE_FOLDER', f'User {current_user.username} created folder {name} (Public: {is_public})', current_user)
+    db.session.commit()
+    
+    flash(f'Folder "{name}" created.', 'success')
+    return redirect(url_for('main.dashboard', folder_id=parent_id if parent_id else None))
+
+@bp.route('/file/<int:file_id>/share', methods=['POST'])
+@login_required
+def share_file(file_id):
+    file = File.query.get_or_404(file_id)
+    if file.owner != current_user:
+        flash('You can only share files you own.', 'danger')
+        return redirect(url_for('main.dashboard'))
+        
+    username = request.form.get('username')
+    user_to_share_with = User.query.filter_by(username=username).first()
+    
+    if not user_to_share_with:
+        flash(f'User {username} not found.', 'warning')
+        return redirect(url_for('main.dashboard'))
+    
+    if user_to_share_with == current_user:
+         flash('You cannot share a file with yourself.', 'warning')
+         return redirect(url_for('main.dashboard'))
+
+    if user_to_share_with not in file.shared_with:
+        file.shared_with.append(user_to_share_with)
+        log_action('SHARE', f'User {current_user.username} shared {file.original_name} with {username}', current_user)
+        db.session.commit()
+        flash(f'File shared with {username}.', 'success')
+    else:
+        flash(f'File already shared with {username}.', 'info')
+        
+    return redirect(url_for('main.dashboard'))
+
+@bp.route('/download/<int:file_id>')
+@login_required
+def download_file(file_id):
+    file_record = File.query.get_or_404(file_id)
+    
+    # Check permissions: Public OR Owner OR Shared With User OR Admin
+    is_shared = current_user in file_record.shared_with
+    if not file_record.is_public and file_record.owner != current_user and not is_shared and not current_user.is_admin:
+        abort(403)
+    
+    # Increment download count
+    file_record.download_count += 1
+    db.session.commit()
+
+    return send_from_directory(current_app.config['UPLOAD_FOLDER'], 
+                             file_record.filename, 
+                             as_attachment=True,
+                             download_name=file_record.original_name)
+
+@bp.route('/view/<int:file_id>')
+@login_required
+def view_file(file_id):
+    file_record = File.query.get_or_404(file_id)
+    
+    # Check permissions (same as download)
+    is_shared = current_user in file_record.shared_with
+    if not file_record.is_public and file_record.owner != current_user and not is_shared and not current_user.is_admin:
+        abort(403)
+    
+    # Send inline for preview
+    return send_from_directory(current_app.config['UPLOAD_FOLDER'], 
+                             file_record.filename, 
+                             as_attachment=False)
+
+@bp.route('/delete/<int:file_id>', methods=['POST'])
+@login_required
+def delete_file(file_id):
+    file_record = File.query.get_or_404(file_id)
+    
+    # Only owner or admin can delete
+    if file_record.owner != current_user and not current_user.is_admin:
+        abort(403)
+    
+    try:
+        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], file_record.filename)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            
+        db.session.delete(file_record)
+        db.session.commit()
+        flash('File deleted successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting file: {str(e)}', 'danger')
+        
+    return redirect(url_for('main.dashboard'))

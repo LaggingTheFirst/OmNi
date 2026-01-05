@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Login - OmNi{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: center; align-items: center; min-height: 60vh;">
+    <div class="glass-card" style="width: 100%; max-width: 400px;">
+        <h2 class="text-center mb-4">Login</h2>
+        <form method="POST" action="{{ url_for('auth.login') }}">
+            <div class="mb-4">
+                <label for="username"
+                    style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Username</label>
+                <input type="text" id="username" name="username" required autofocus>
+            </div>
+
+            <div class="mb-4">
+                <label for="password"
+                    style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

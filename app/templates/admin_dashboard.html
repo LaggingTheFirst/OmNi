@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="glass-panel fade-in">
+    <div class="panel-header">
+        <h2><i class="fas fa-shield-alt"></i> Admin Dashboard</h2>
+    </div>
+
+    <div class="admin-stats">
+        <div class="stat-card">
+            <h3>Total Users</h3>
+            <p>{{ users|length }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Active Users (24h)</h3>
+            <p>{{ active_users_count }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Total Files</h3>
+            <p>{{ total_files }}</p>
+        </div>
+    </div>
+
+    <div class="panel-section">
+        <h3>Create New User</h3>
+        <form action="{{ url_for('main.create_user') }}" method="POST" class="create-user-form glass-card">
+            <div class="form-group">
+                <input type="text" name="username" placeholder="Username" required>
+            </div>
+            <div class="form-group">
+                <input type="password" name="password" placeholder="Password" required>
+            </div>
+            <div class="form-group checkbox-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="is_admin">
+                    <span>Admin Access</span>
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary">Create User</button>
+        </form>
+    </div>
+
+    <div class="panel-section">
+        <h3>User Management</h3>
+        <div class="table-responsive">
+            <table class="glass-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Created</th>
+                        <th>Last Seen</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ user.last_seen.strftime('%Y-%m-%d %H:%M') if user.last_seen else 'N/A' }}</td>
+                        <td>
+                            {% if user.is_admin %}
+                            <span class="badge badge-admin">Admin</span>
+                            {% else %}
+                            <span class="badge badge-user">User</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.is_blocked %}
+                            <span class="badge badge-blocked">Blocked</span>
+                            {% else %}
+                            <span class="badge badge-active">Enabled</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if not user.is_admin %}
+                            {% if user.is_blocked %}
+                            <form action="{{ url_for('main.unblock_user', user_id=user.id) }}" method="POST"
+                                class="inline-form">
+                                <button type="submit" class="btn btn-sm btn-success">Unblock</button>
+                            </form>
+                            {% else %}
+                            <form action="{{ url_for('main.block_user', user_id=user.id) }}" method="POST"
+                                class="inline-form">
+                                <button type="submit" class="btn btn-sm btn-danger">Block</button>
+                            </form>
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="panel-section">
+        <h3>Recent System Logs</h3>
+        <div class="logs-container">
+            <ul class="logs-list">
+                {% for log in logs %}
+                <li class="log-item">
+                    <span class="log-time">{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+                    <span class="log-action">[{{ log.action }}]</span>
+                    <span class="log-details">{{ log.details }}</span>
+                    {% if log.user %}
+                    <span class="log-user">- {{ log.user.username }}</span>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env
+venv
+.env
+.venv
+dist
+build
+*.spec
+.git
+.gitignore
+instance/omni.db
+uploads/*
+# Keep gitignore files but ignore actual upload content
+!uploads/.gitkeep

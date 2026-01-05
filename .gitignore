@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Database
+# Keep the directory structure but ignore actual DBs
+instance/*
+!instance/.gitkeep
+*.db
+*.sqlite3
+
+# Application Data (Uploads)
+# Keep the directory structure but ignore contents
+uploads/*
+!uploads/.gitkeep
+app/static/uploads/
+
+# Environment Variables
+.env
+.flaskenv
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# PyInstaller Build
+build/
+dist/
+# Keep omni.spec as it is critical for others to build the same binary
+# *.spec 
+*.toc
+*.pyz
+
+# Executable Build Artifacts
+warn-*.txt
+xref-*.html
+
+# AI Assistant Brain (Internal planning/logs)
+brain/
+.gemini/
