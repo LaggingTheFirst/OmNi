@@ -206,8 +206,10 @@ def upload_file():
     
     files = request.files.getlist('files[]')
     is_public = request.form.get('is_public') == 'true'
+    is_encrypted_form = request.form.get('is_encrypted') == 'true'
+    encryption_data_list = request.form.getlist('encryption_data[]')
     
-    for file in files:
+    for i, file in enumerate(files):
         if file.filename == '':
             continue
             
@@ -221,6 +223,9 @@ def upload_file():
             try:
                 file.save(file_path)
                 
+                # encryption_data for this specific file, if available
+                enc_data = encryption_data_list[i] if i < len(encryption_data_list) else None
+
                 new_file = File(
                     filename=filename,
                     original_name=original_filename,
@@ -228,7 +233,9 @@ def upload_file():
                     size=os.path.getsize(file_path),
                     user_id=current_user.id,
                     is_public=is_public,
-                    folder_id=request.form.get('folder_id', type=int) # Capture folder
+                    folder_id=request.form.get('folder_id', type=int),
+                    is_encrypted=is_encrypted_form,
+                    encryption_data=enc_data
                 )
                 db.session.add(new_file)
                 

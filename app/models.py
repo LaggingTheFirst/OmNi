@@ -59,6 +59,9 @@ class File(db.Model):
     def __repr__(self):
         return f"File('{self.filename}', '{self.size} bytes', 'Public: {self.is_public}')"
 
+    is_encrypted = db.Column(db.Boolean, default=False)
+    encryption_data = db.Column(db.Text, nullable=True) # JSON string storing IV and Salt
+
 class Log(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)

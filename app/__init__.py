@@ -66,6 +66,20 @@ def check_db_schema(db):
             print("Migrating database: Adding 'is_public' column to 'folder' table...")
             cursor.execute("ALTER TABLE folder ADD COLUMN is_public BOOLEAN DEFAULT 0")
             conn.commit()
+
+        # Check encryption columns in file table
+        cursor.execute("PRAGMA table_info(file)")
+        file_columns = [column[1] for column in cursor.fetchall()]
+
+        if 'is_encrypted' not in file_columns:
+            print("Migrating database: Adding 'is_encrypted' column to 'file' table...")
+            cursor.execute("ALTER TABLE file ADD COLUMN is_encrypted BOOLEAN DEFAULT 0")
+        
+        if 'encryption_data' not in file_columns:
+            print("Migrating database: Adding 'encryption_data' column to 'file' table...")
+            cursor.execute("ALTER TABLE file ADD COLUMN encryption_data TEXT")
+
+        conn.commit()
             
         conn.close()
     except Exception as e:

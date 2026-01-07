@@ -86,6 +86,17 @@
                 <input type="checkbox" id="isPublic" name="is_public" value="true" checked>
                 <span style="margin-left: 8px;">Make Public</span>
             </label>
+            <label class="checkbox-label"
+                style="background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 4px; border: 1px solid var(--glass-border); margin-left:10px;">
+                <input type="checkbox" id="isEncrypted" onchange="toggleEncryptionInput()">
+                <span style="margin-left: 8px;">Encrypt Files</span>
+            </label>
+        </div>
+        <div id="encryptionInputArea" style="display: none; margin-bottom: 15px;">
+            <input type="password" id="encryptionKey" placeholder="Enter Encryption Password" class="form-input"
+                style="max-width: 250px; text-align: center; border: 1px solid var(--accent-color);">
+            <p style="font-size: 0.75rem; color: #ff6b6b; margin-top: 5px;">Warning: If you lose this password, files
+                cannot be recovered.</p>
         </div>
         <p style="font-size: 0.8rem; color: var(--text-secondary);">Max size: 16GB</p>
         <div id="upload-progress" style="display: none; margin-top: 1rem;">
@@ -128,6 +139,12 @@
                     <span
                         style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">{{
                         file.file_type|upper }}</span>
+                    {% if file.is_encrypted %}
+                    <span title="Encrypted"
+                        style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc; padding: 4px 6px; border-radius: 4px; font-size: 0.7rem;">
+                        🔒
+                    </span>
+                    {% endif %}
                     <h4 style="font-size: 0.95rem; word-break: break-all;">{{ file.original_name }}</h4>
                 </div>
                 <p style="font-size: 0.8rem; color: var(--text-secondary);">
@@ -135,13 +152,17 @@
                 </p>
             </div>
             <div class="file-actions">
-                <button
-                    onclick="openPreview('{{ url_for('main.view_file', file_id=file.id) }}', '{{ file.file_type|replace('\'', '\\\'') }}', '{{ file.original_name|replace('\'', '\\\'') }}')"
-                    class="btn btn-sm btn-action" title="Preview">
+                <button class="btn btn-sm btn-action preview-btn" data-id="{{ file.id }}"
+                    data-type="{{ file.file_type }}" data-name="{{ file.original_name }}"
+                    data-encrypted="{{ 'true' if file.is_encrypted else 'false' }}"
+                    data-encryption-data='{{ file.encryption_data|default("null")|safe }}'
+                    data-url="{{ url_for('main.view_file', file_id=file.id) }}" onclick="handlePreviewClick(this)">
                     Preview
                 </button>
-                <a href="{{ url_for('main.download_file', file_id=file.id) }}" class="btn btn-sm btn-action"
-                    title="Download">
+                <a href="javascript:void(0)" class="btn btn-sm btn-action download-btn"
+                    data-name="{{ file.original_name }}" data-encrypted="{{ 'true' if file.is_encrypted else 'false' }}"
+                    data-encryption-data='{{ file.encryption_data|default("null")|safe }}'
+                    data-url="{{ url_for('main.download_file', file_id=file.id) }}" onclick="handleDownloadClick(this)">
                     Download
                 </a>
 
@@ -200,9 +221,24 @@
             style="max-width: 300px; border-radius: var(--radius-md);">
     </div>
 </div>
+
+<!-- Decryption Password Modal -->
+<div id="decryptModal" class="modal">
+    <div class="modal-content glass-panel">
+        <span class="close-modal" onclick="closeDecrypt()">&times;</span>
+        <h3>Decrypt File</h3>
+        <p>This file is encrypted. Enter the password to view or download.</p>
+        <div style="margin: 15px 0;">
+            <input type="password" id="decryptPassword" placeholder="Encryption Password" class="form-input" autofocus>
+        </div>
+        <p id="decryptError" style="color: #ff6b6b; display: none; margin-bottom: 10px;"></p>
+        <button id="decryptBtn" class="btn btn-primary" style="width: 100%;">Decrypt & Open</button>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/encryption.js') }}"></script>
 <script>
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
@@ -285,21 +321,124 @@
         qrModal.style.display = "none";
     }
 
+    // Encryption Helpers & Modal Logic
+    function handlePreviewClick(btn) {
+        const isEncrypted = btn.dataset.encrypted === 'true';
+        const url = btn.dataset.url;
+        const type = btn.dataset.type;
+        const name = btn.dataset.name;
+
+        if (isEncrypted) {
+            currentDecryptAction = {
+                type: 'preview',
+                url: url,
+                fileType: type,
+                name: name,
+                encryptionData: btn.dataset.encryptionData
+            };
+            openDecryptModal();
+        } else {
+            openPreview(url, type, name);
+        }
+    }
+
+    function handleDownloadClick(btn) {
+        const isEncrypted = btn.dataset.encrypted === 'true';
+        const url = btn.dataset.url;
+        const name = btn.dataset.name;
+
+        if (isEncrypted) {
+            currentDecryptAction = {
+                type: 'download',
+                url: url,
+                name: name,
+                encryptionData: btn.dataset.encryptionData
+            };
+            openDecryptModal();
+        } else {
+            window.location.href = url;
+        }
+    }
+
+    // Encryption/Decryption UI Logic
+    let currentDecryptAction = null;
+
+    function toggleEncryptionInput() {
+        const isEncrypted = document.getElementById('isEncrypted').checked;
+        document.getElementById('encryptionInputArea').style.display = isEncrypted ? 'block' : 'none';
+        if (isEncrypted) document.getElementById('encryptionKey').focus();
+    }
+
+    function openDecryptModal() {
+        document.getElementById('decryptModal').style.display = "block";
+        document.getElementById('decryptPassword').value = '';
+        document.getElementById('decryptError').style.display = 'none';
+        document.getElementById('decryptPassword').focus();
+    }
+
+    function closeDecrypt() {
+        document.getElementById('decryptModal').style.display = "none";
+        currentDecryptAction = null;
+    }
+
+    document.getElementById('decryptBtn').addEventListener('click', async () => {
+        const password = document.getElementById('decryptPassword').value;
+        if (!password) return;
+
+        const action = currentDecryptAction;
+        if (!action) return;
+
+        const btn = document.getElementById('decryptBtn');
+        const originalText = btn.innerText;
+        btn.innerText = "Decrypting...";
+        btn.disabled = true;
+
+        try {
+            const response = await fetch(action.url);
+            const blob = await response.blob();
+
+            const decryptedBlob = await Encryption.decryptFile(blob, password, action.encryptionData);
+            const objectUrl = URL.createObjectURL(decryptedBlob);
+
+            if (action.type === 'preview') {
+                openPreview(objectUrl, action.fileType, action.name);
+            } else {
+                const link = document.createElement('a');
+                link.href = objectUrl;
+                link.download = action.name;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            closeDecrypt();
+        } catch (e) {
+            console.error(e);
+            document.getElementById('decryptError').innerText = "Incorrect password or decryption failed.";
+            document.getElementById('decryptError').style.display = 'block';
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    });
+
+
     window.onclick = function (event) {
-        if (event.target == shareModal) {
-            closeShare();
-        }
-        if (event.target == previewModal) {
-            closePreview();
-        }
-        if (event.target == document.getElementById('qrModal')) {
-            closeQR();
-        }
+        if (event.target == shareModal) closeShare();
+        if (event.target == previewModal) closePreview();
+        if (event.target == document.getElementById('qrModal')) closeQR();
+        if (event.target == document.getElementById('decryptModal')) closeDecrypt();
     }
 
     // Drag & Drop Listeners (Preserved)
     if (dropZone) {
-        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('click', (e) => {
+            // Prevent triggering file picker when clicking on inputs or labels
+            if (e.target.closest('.upload-options') || e.target.closest('#encryptionInputArea')) {
+                return;
+            }
+            fileInput.click();
+        });
 
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -323,22 +462,45 @@
         });
     }
 
-    function handleFiles(files) {
+    async function handleFiles(files) {
         uploadProgress.style.display = 'block';
-        const formData = new FormData();
-        for (let i = 0; i < files.length; i++) {
-            formData.append('files[]', files[i]);
+
+        const isEncrypted = document.getElementById('isEncrypted') ? document.getElementById('isEncrypted').checked : false;
+        const password = document.getElementById('encryptionKey') ? document.getElementById('encryptionKey').value : '';
+
+        if (isEncrypted && !password) {
+            alert("Please enter an encryption password.");
+            uploadProgress.style.display = 'none';
+            return;
         }
 
-        // Add is_public flag
+        const formData = new FormData();
         const isPublicCheckbox = document.getElementById('isPublic');
-        formData.append('is_public', isPublicCheckbox.checked);
 
-        // Pass folder_id if present in URL
+        formData.append('is_public', isPublicCheckbox.checked);
+        if (isEncrypted) formData.append('is_encrypted', 'true');
+
         const urlParams = new URLSearchParams(window.location.search);
         const folderId = urlParams.get('folder_id');
-        if (folderId) {
-            formData.append('folder_id', folderId);
+        if (folderId) formData.append('folder_id', folderId);
+
+        try {
+            for (let i = 0; i < files.length; i++) {
+                if (isEncrypted) {
+                    progressText.innerText = `Encrypting ${files[i].name}...`;
+                    // Call module
+                    const result = await Encryption.encryptFile(files[i], password);
+                    formData.append('files[]', result.blob, files[i].name);
+                    formData.append('encryption_data[]', result.data);
+                } else {
+                    formData.append('files[]', files[i]);
+                }
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error during encryption: " + e.message);
+            uploadProgress.style.display = 'none';
+            return;
         }
 
         const xhr = new XMLHttpRequest();
@@ -348,7 +510,7 @@
             if (e.lengthComputable) {
                 const percentComplete = (e.loaded / e.total) * 100;
                 progressBar.style.width = percentComplete + '%';
-                progressText.innerText = Math.round(percentComplete) + '%';
+                progressText.innerText = isEncrypted ? `Uploading (${Math.round(percentComplete)}%)...` : Math.round(percentComplete) + '%';
             }
         };
 
