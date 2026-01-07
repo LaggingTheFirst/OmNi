@@ -8,7 +8,7 @@ OmNi is a self-hosted, local network file-sharing application designed for speed
 ## Features
 
 - **📂 Smart Organization**: Create folders, navigate breadcrumbs, and organize your files.
-![OmNi Dashboard](screenshots/newfoldertest.mp4)
+![Smart Organization Demo](screenshots/newfoldertest.mp4)
 - **🚀 Drag & Drop**: Upload files easily by dragging them anywhere on the dashboard.
 - **👁️ Live Previews**: Preview images, videos, audio, and PDFs directly in the browser.
 - **🔍 Instant Search**: Filter files by name or type instantly.
@@ -23,6 +23,8 @@ OmNi is a self-hosted, local network file-sharing application designed for speed
   - adaptive grids
   - touch-optimized controls
   - smart layouts for small screens
+- **📲 PWA Support**: Install OmNi as a native-like app on your home screen for quick access.
+- **🔗 QR Connection**: Instantly connect mobile devices by scanning a QR code—no manual IP entry required.
 
 ## Technology Stack
 
