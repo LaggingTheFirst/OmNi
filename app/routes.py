@@ -398,3 +398,47 @@ def delete_file(file_id):
         flash(f'Error deleting file: {str(e)}', 'danger')
         
     return redirect(url_for('main.dashboard'))
+
+
+# --- Profile Routes ---
+
+@bp.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    if request.method == 'POST':
+        # Update text fields
+        current_user.display_name = request.form.get('display_name')
+        current_user.bio = request.form.get('bio')
+        
+        # Handle Avatar Upload
+        if 'avatar' in request.files:
+            file = request.files['avatar']
+            if file and file.filename != '' and allowed_file(file.filename):
+                # Secure and unique filename for avatar
+                ext = file.filename.rsplit('.', 1)[1].lower()
+                filename = f"avatar_{current_user.id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.{ext}"
+                
+                avatar_path = os.path.join(current_app.config['AVATAR_UPLOAD_FOLDER'], filename)
+                
+                try:
+                    # Save new avatar
+                    # (Optional: Delete old avatar if not default)
+                    file.save(avatar_path)
+                    current_user.avatar_file = filename
+                except Exception as e:
+                    flash(f'Error saving avatar: {str(e)}', 'danger')
+        
+        try:
+            db.session.commit()
+            flash('Profile updated successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating profile: {str(e)}', 'danger')
+            
+        return redirect(url_for('main.profile'))
+        
+    return render_template('profile.html')
+
+@bp.route('/avatars/<filename>')
+def avatar(filename):
+    return send_from_directory(current_app.config['AVATAR_UPLOAD_FOLDER'], filename)

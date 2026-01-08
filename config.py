@@ -12,6 +12,7 @@ class Config:
     
     # Uploads
     UPLOAD_FOLDER = os.path.join(basedir, 'uploads')
+    AVATAR_UPLOAD_FOLDER = os.path.join(basedir, 'uploads', 'avatars')
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024 * 1024  # 16 GB max file size
     ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'zip', 'rar', 'mp4', 'mp3', 'mkv', 'iso', 'exe', 'msi'}
     
@@ -27,6 +28,8 @@ class Config:
     def init_app(app):
         if not os.path.exists(Config.UPLOAD_FOLDER):
             os.makedirs(Config.UPLOAD_FOLDER)
+        if not os.path.exists(Config.AVATAR_UPLOAD_FOLDER):
+            os.makedirs(Config.AVATAR_UPLOAD_FOLDER)
         
         # Ensure instance folder exists for SQLite db
         instance_path = os.path.join(Config.basedir, 'instance')

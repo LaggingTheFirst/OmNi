@@ -21,6 +21,11 @@ class User(db.Model, UserMixin):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     last_seen = db.Column(db.DateTime, default=None)
     
+    # Profile Fields
+    display_name = db.Column(db.String(50), nullable=True) # Optional display name
+    bio = db.Column(db.String(500), nullable=True)         # Short bio
+    avatar_file = db.Column(db.String(20), nullable=False, default='default.png') # Avatar filename
+    
     files = db.relationship('File', backref='owner', lazy=True, cascade="all, delete-orphan")
     shared_files = db.relationship('File', secondary=file_shares, backref=db.backref('shared_with', lazy='dynamic'), lazy='dynamic')
 

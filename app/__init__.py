@@ -78,6 +78,22 @@ def check_db_schema(db):
         if 'encryption_data' not in file_columns:
             print("Migrating database: Adding 'encryption_data' column to 'file' table...")
             cursor.execute("ALTER TABLE file ADD COLUMN encryption_data TEXT")
+            
+        # Check profile columns in user table (Phase 2)
+        cursor.execute("PRAGMA table_info(user)")
+        user_columns = [column[1] for column in cursor.fetchall()]
+        
+        if 'bio' not in user_columns:
+            print("Migrating database: Adding 'bio' to 'user' table...")
+            cursor.execute("ALTER TABLE user ADD COLUMN bio VARCHAR(500)")
+
+        if 'avatar_file' not in user_columns:
+            print("Migrating database: Adding 'avatar_file' to 'user' table...")
+            cursor.execute("ALTER TABLE user ADD COLUMN avatar_file VARCHAR(20) DEFAULT 'default.png'")
+
+        if 'display_name' not in user_columns:
+             print("Migrating database: Adding 'display_name' to 'user' table...")
+             cursor.execute("ALTER TABLE user ADD COLUMN display_name VARCHAR(50)")
 
         conn.commit()
             
