@@ -1,3 +1,5 @@
+⚠️ OmNi is currently in Beta (v1.0.2). We are actively squashing bugs and optimizing the UI.
+
 # OmNi File Sharer 🚀
 
 OmNi is a self-hosted, local network file-sharing application designed for speed, privacy, and simplicity. Built with Python (Flask) and a modern glassmorphism UI.
