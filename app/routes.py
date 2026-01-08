@@ -2,7 +2,7 @@ import os
 import socket
 import qrcode
 from io import BytesIO
-from flask import Blueprint, render_template, request, redirect, url_for, flash, send_from_directory, current_app, abort, send_file
+from flask import Blueprint, render_template, request, redirect, url_for, flash, send_from_directory, current_app, abort, send_file, Response
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
@@ -10,8 +10,36 @@ from app.models import File, User, Log, Folder
 from app.extensions import db, bcrypt
 from app.utils import log_action
 from functools import wraps
+from PIL import Image
+import mimetypes
+import unicodedata
+import re
 
 bp = Blueprint('main', __name__)
+
+def secure_filename_unicode(filename):
+    """
+    Passes through Unicode characters to support multi-language filenames 
+    while stripping dangerous characters.
+    """
+    # Normalize unicode characters to NFKD form
+    filename = unicodedata.normalize("NFKD", filename)
+    
+    # Remove any null bytes or control characters
+    filename = filename.replace('\0', '')
+    
+    # Allow alphanumeric (including unicode), dashes, underscores, dots, and spaces
+    # This regex matches characters that are NOT:
+    # \w (alphanumeric + underscore in any language), \s (whitespace), - (dash), . (dot)
+    filename = re.sub(r'[^\w\s\-\.]', '', filename)
+    
+    # Strip leading/trailing whitespace
+    filename = filename.strip()
+    
+    # Replace sequences of whitespace with a single underscore to avoid messy URLs
+    filename = re.sub(r'[-\s]+', '_', filename)
+    
+    return filename
 
 @bp.before_app_request
 def before_request():
@@ -209,12 +237,20 @@ def upload_file():
     is_encrypted_form = request.form.get('is_encrypted') == 'true'
     encryption_data_list = request.form.getlist('encryption_data[]')
     
+
+            
     for i, file in enumerate(files):
         if file.filename == '':
             continue
             
         if file and allowed_file(file.filename):
-            original_filename = secure_filename(file.filename)
+            # Use improved unicode-safe function
+            original_filename = secure_filename_unicode(file.filename)
+            
+            # If filename becomes empty (e.g. all special chars), fallback to timestamp
+            if not original_filename:
+                original_filename = "unnamed_file"
+
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             filename = f"{timestamp}_{original_filename}"
             
