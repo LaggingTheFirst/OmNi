@@ -36,6 +36,18 @@ Access at `http://localhost:5000` or your local IP (e.g., `192.168.1.5:5000`).
 > [!IMPORTANT]
 > **First Step**: Change default admin credentials (`admin`/`admin`) in `config.py`.
 
+## 🔐 Security Checklist
+
+Before exposing OmNi beyond your local machine, **you must**:
+
+1. **Change `SECRET_KEY`** in `config.py` — use a random 32+ character string
+2. **Change default admin password** — don't leave `admin`/`admin`
+3. **Use HTTPS** — set up a reverse proxy (nginx/Caddy) with SSL for remote access
+4. **Firewall rules** — only expose the port to trusted networks
+
+> [!CAUTION]
+> OmNi is designed for **trusted local networks**. Without the above steps, do not expose it to the public internet. Consider adding your own auth layer (VPN, Cloudflare Tunnel, etc.) for remote access.
+
 ## 📦 Deployment & Extras
 
 - **🐳 Docker**: `docker-compose up -d`
