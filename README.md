@@ -13,6 +13,12 @@ OmNi is a self-hosted, local network file-sharing application designed for speed
 - **👁️ Live Previews**: Preview images, videos, audio, and PDFs directly in the browser.
 - **🔍 Instant Search**: Filter files by name or type instantly.
 - **🔒 Privacy Control**: Mark files and **Folders** as **Public** (visible to everyone) or **Private** (only you).
+- **🖥️ Smart Organization**: Automatically sorts large file collections into logical folders (Movies, Images, Documents, Music, Archives).
+- **🔒 End-to-End Encryption (E2EE)**: Encrypt files in your browser before upload. Only you hold the password.
+- **👤 User Profiles**: Customize your identity with a bio, display name, and avatar.
+- **🌏 Unicode Support**: Full support for multi-language filenames (Korean, Chinese, Emoji, etc.).
+- **📱 PWA & Mobile-Ready**: Install as an app on your phone. Connect instantly by scanning a QR code.
+- **📂 Smart Dashboard**: Grid view with file previews, size details, and quick actions.
 - **🛡️ Global Admin**: Admins have full visibility over all folders and files to manage the server effectively.
 - **👥 User Sharing**: Share private files with specific users securely.
 
