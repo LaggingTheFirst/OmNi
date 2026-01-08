@@ -59,3 +59,7 @@ Before exposing OmNi beyond your local machine, **you must**:
 OmNi is built with standard Python, HTML, and CSS—designed to be easy for anyone to modify. 
 
 **License**: MIT. Feel free to host and hack!
+
+---
+
+*"There is no spoon."* 🥄

@@ -627,3 +627,93 @@ input:focus {
         height: 32px;
     }
 }
+
+/* ========================================
+   Performance Mode (No Blur)
+   ======================================== */
+body.perf-mode {
+    background-attachment: scroll;
+}
+
+body.perf-mode .glass-panel {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(30, 30, 40, 0.92);
+}
+
+body.perf-mode .modal {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+body.perf-mode .glass-card {
+    background: rgba(40, 40, 50, 0.9);
+}
+
+/* Performance toggle button */
+.perf-toggle {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.perf-toggle:hover {
+    opacity: 1;
+}
+
+/* ========================================
+   Easter Egg: Matrix Green Theme
+   Type "matrix" anywhere to activate!
+   ======================================== */
+body.theme-matrix {
+    --accent-color: #22c55e;
+    --accent-hover: #4ade80;
+    background-image:
+        radial-gradient(circle at 10% 20%, rgba(34, 197, 94, 0.2) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(22, 163, 74, 0.15) 0%, transparent 40%);
+}
+
+body.theme-matrix .glass-panel {
+    border-color: rgba(34, 197, 94, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), 0 0 20px rgba(34, 197, 94, 0.1);
+}
+
+body.theme-matrix .btn-primary {
+    background: #22c55e;
+}
+
+body.theme-matrix .btn-primary:hover {
+    background: #16a34a;
+}
+
+body.theme-matrix a {
+    color: #4ade80;
+}
+
+body.theme-matrix a:hover {
+    color: #86efac;
+}
+
+body.theme-matrix .logo svg path {
+    stroke: #22c55e;
+}
+
+/* Matrix activation flash */
+@keyframes matrixFlash {
+    0% {
+        filter: brightness(1);
+    }
+
+    50% {
+        filter: brightness(1.5) hue-rotate(80deg);
+    }
+
+    100% {
+        filter: brightness(1);
+    }
+}
+
+body.matrix-activate {
+    animation: matrixFlash 0.5s ease-out;
+}

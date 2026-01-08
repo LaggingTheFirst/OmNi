@@ -57,3 +57,82 @@ window.addEventListener('appinstalled', (evt) => {
     const installBtn = document.getElementById('installBtn');
     if (installBtn) installBtn.style.display = 'none';
 });
+
+// ========================================
+// Performance Mode Toggle
+// ========================================
+function initPerfMode() {
+    const saved = localStorage.getItem('perfMode');
+    if (saved === 'true') {
+        document.body.classList.add('perf-mode');
+    }
+    updatePerfToggleUI();
+}
+
+function togglePerfMode() {
+    document.body.classList.toggle('perf-mode');
+    const isPerf = document.body.classList.contains('perf-mode');
+    localStorage.setItem('perfMode', isPerf);
+    updatePerfToggleUI();
+}
+
+function updatePerfToggleUI() {
+    const btn = document.getElementById('perfToggle');
+    if (!btn) return;
+    const isPerf = document.body.classList.contains('perf-mode');
+    btn.innerHTML = isPerf ? '✨ Quality' : '⚡ Perf';
+    btn.title = isPerf ? 'Switch to Quality Mode (blur effects)' : 'Switch to Performance Mode (faster scrolling)';
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', initPerfMode);
+
+// ========================================
+// Easter Egg: Matrix Theme
+// Type "matrix" anywhere to activate!
+// ========================================
+let matrixBuffer = '';
+const MATRIX_CODE = 'matrix';
+
+document.addEventListener('keypress', (e) => {
+    // Don't trigger in input fields
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    matrixBuffer += e.key.toLowerCase();
+
+    // Keep only last 6 characters
+    if (matrixBuffer.length > MATRIX_CODE.length) {
+        matrixBuffer = matrixBuffer.slice(-MATRIX_CODE.length);
+    }
+
+    // Check for match
+    if (matrixBuffer === MATRIX_CODE) {
+        activateMatrix();
+        matrixBuffer = '';
+    }
+});
+
+function activateMatrix() {
+    const body = document.body;
+    const isMatrix = body.classList.contains('theme-matrix');
+
+    // Flash effect
+    body.classList.add('matrix-activate');
+    setTimeout(() => body.classList.remove('matrix-activate'), 500);
+
+    // Toggle theme
+    body.classList.toggle('theme-matrix');
+
+    // Persist preference
+    localStorage.setItem('themeMatrix', !isMatrix);
+
+    // Console easter egg
+    console.log(isMatrix ? '🔵 Back to reality...' : '🟢 Welcome to the Matrix, Neo.');
+}
+
+// Restore Matrix theme on load
+document.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('themeMatrix') === 'true') {
+        document.body.classList.add('theme-matrix');
+    }
+});
