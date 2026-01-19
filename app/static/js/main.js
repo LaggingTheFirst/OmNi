@@ -1,10 +1,14 @@
-document.addEventListener('DOMContentLoaded', () => {
+/**
+ * @fileoverview Main frontend logic for OmNi Dashboard
+ */
 
+document.addEventListener('DOMContentLoaded', () => {
 
     // Auto-dismiss alerts after 5 seconds
     const alerts = document.querySelectorAll('.alert');
     alerts.forEach(alert => {
         setTimeout(() => {
+            // @ts-ignore
             alert.style.opacity = '0';
             setTimeout(() => alert.remove(), 300);
         }, 5000);
@@ -12,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Register Service Worker
+/** @type {BeforeInstallPromptEvent | null} */
 let deferredPrompt;
 
 if ('serviceWorker' in navigator) {
@@ -136,3 +141,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.add('theme-matrix');
     }
 });
+
+/**
+ * @typedef {Object} BeforeInstallPromptEvent
+ * @property {() => Promise<void>} prompt
+ * @property {Promise<{outcome: 'accepted' | 'dismissed'}>} userChoice
+ * @property {() => void} preventDefault
+ */

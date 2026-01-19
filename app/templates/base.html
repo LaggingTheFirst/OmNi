@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#6366f1">
     <link rel="manifest" href="/manifest.json">
-    <title>{% block title %}OmNi File Sharer{% endblock %}</title>
+    <title>{% block title %}OmNi {{ 'Nexus' if IS_NEXUS else 'Core' }}{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,22 +28,26 @@
                     <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round" />
                 </svg>
-                OmNi
+                OmNi <span style="font-size: 0.6em; margin-left: 4px; opacity: 0.7;">{{ 'NEXUS' if IS_NEXUS else 'CORE'
+                    }}</span>
             </a>
             <div class="nav-links">
-                <button id="perfToggle" onclick="togglePerfMode()" class="btn btn-sm btn-action perf-toggle">⚡ Perf</button>
+                <button id="perfToggle" onclick="togglePerfMode()" class="btn btn-sm btn-action perf-toggle">⚡
+                    Perf</button>
                 {% if current_user.is_authenticated %}
-                {% if current_user.is_admin %}
+                {% if IS_NEXUS and current_user.is_admin %}
                 <a href="{{ url_for('main.admin_dashboard') }}" class="nav-link">Admin</a>
                 {% endif %}
                 <a href="{{ url_for('main.dashboard') }}" class="nav-link">Dashboard</a>
 
+                {% if IS_NEXUS %}
                 <a href="{{ url_for('main.profile') }}" class="nav-link user-profile-link"
                     style="display: flex; align-items: center; gap: 8px;">
                     <img src="{{ url_for('main.avatar', filename=current_user.avatar_file) }}" alt="Avatar"
                         style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.3);">
                     <span>{{ current_user.display_name or current_user.username }}</span>
                 </a>
+                {% endif %}
                 <a href="{{ url_for('auth.logout') }}" class="nav-link"
                     style="opacity: 0.7; font-size: 0.9em;">Logout</a>
                 {% else %}

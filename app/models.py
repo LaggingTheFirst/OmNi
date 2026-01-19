@@ -66,6 +66,23 @@ class File(db.Model):
 
     is_encrypted = db.Column(db.Boolean, default=False)
     encryption_data = db.Column(db.Text, nullable=True) # JSON string storing IV and Salt
+    current_version = db.Column(db.Integer, default=1)
+    versions = db.relationship('FileVersion', backref='file', lazy=True, cascade="all, delete-orphan")
+
+class FileVersion(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    file_id = db.Column(db.Integer, db.ForeignKey('file.id'), nullable=False)
+    filename = db.Column(db.String(255), nullable=False) # Physical filename of this version
+    size = db.Column(db.Integer, nullable=False)
+    upload_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    version_number = db.Column(db.Integer, nullable=False)
+    
+    # Metadata snapshot (crucial for encrypted files)
+    is_encrypted = db.Column(db.Boolean, default=False)
+    encryption_data = db.Column(db.Text, nullable=True) 
+
+    def __repr__(self):
+        return f"FileVersion('{self.version_number}', '{self.filename}')"
 
 class Log(db.Model):
     id = db.Column(db.Integer, primary_key=True)

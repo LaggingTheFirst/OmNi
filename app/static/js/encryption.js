@@ -8,17 +8,28 @@ const Encryption = {
     saltLen: 16,
     ivLen: 12,
 
-    // Generate a random salt
+    /**
+     * Generate a random salt
+     * @returns {Uint8Array}
+     */
     generateSalt: function () {
         return window.crypto.getRandomValues(new Uint8Array(this.saltLen));
     },
 
-    // Generate a random IV
+    /**
+     * Generate a random IV
+     * @returns {Uint8Array}
+     */
     generateIV: function () {
         return window.crypto.getRandomValues(new Uint8Array(this.ivLen));
     },
 
-    // Derive a key from password and salt
+    /**
+     * Derive a key from password and salt
+     * @param {string} password 
+     * @param {Uint8Array} salt 
+     * @returns {Promise<CryptoKey>}
+     */
     deriveKey: async function (password, salt) {
         const enc = new TextEncoder();
         const keyMaterial = await window.crypto.subtle.importKey(
@@ -43,7 +54,12 @@ const Encryption = {
         );
     },
 
-    // Encrypt a file (Blob/File)
+    /**
+     * Encrypt a file
+     * @param {Blob|File} file - The file to encrypt
+     * @param {string} password - The encryption password
+     * @returns {Promise<{blob: Blob, data: string}>} - Returns encrypted blob and JSON string with salt/iv
+     */
     encryptFile: async function (file, password) {
         try {
             const salt = this.generateSalt();
@@ -77,7 +93,13 @@ const Encryption = {
         }
     },
 
-    // Decrypt a file (ArrayBuffer/Blob)
+    /**
+     * Decrypt a file
+     * @param {Blob} encryptedBlob - The encrypted file blob
+     * @param {string} password - The decryption password
+     * @param {string} encryptionDataJson - JSON string containing salt and iv
+     * @returns {Promise<Blob>} - Returns decrypted file blob
+     */
     decryptFile: async function (encryptedBlob, password, encryptionDataJson) {
         try {
             const data = JSON.parse(encryptionDataJson);
@@ -104,12 +126,22 @@ const Encryption = {
     },
 
     // Helpers
+    /**
+     * Convert buffer to hex string
+     * @param {ArrayBuffer|Uint8Array} buffer 
+     * @returns {string}
+     */
     buf2hex: function (buffer) {
         return [...new Uint8Array(buffer)]
             .map(x => x.toString(16).padStart(2, '0'))
             .join('');
     },
 
+    /**
+     * Convert hex string to Uint8Array
+     * @param {string} hexString 
+     * @returns {Uint8Array}
+     */
     hex2buf: function (hexString) {
         return new Uint8Array(hexString.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
     }

@@ -1,6 +1,9 @@
 import os
 
 class Config:
+    # Edition (CORE for Personal, NEXUS for Office)
+    OMNI_EDITION = os.environ.get('OMNI_EDITION') or 'CORE'
+
     # Security
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-key-change-this-in-prod'
     

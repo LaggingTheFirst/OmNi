@@ -45,10 +45,12 @@
             {% endif %}
             <input type="text" name="name" placeholder="New Folder" required
                 style="padding: 6px 10px; width: 150px; border-radius: 4px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white;">
+            {% if IS_NEXUS %}
             <label
                 style="display: flex; align-items: center; cursor: pointer; background: rgba(255,255,255,0.05); padding: 0 8px; border-radius: 4px; border: 1px solid var(--glass-border);">
                 <input type="checkbox" name="is_public" title="Make Public">
             </label>
+            {% endif %}
             <button type="submit" class="btn btn-sm btn-action">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
@@ -81,11 +83,13 @@
         </svg>
         <p style="margin-bottom: 8px;">Drag & Drop files here or click to upload</p>
         <div class="upload-options" style="margin-bottom: 15px; display: flex; justify-content: center;">
+            {% if IS_NEXUS %}
             <label class="checkbox-label"
                 style="background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 4px; border: 1px solid var(--glass-border);">
                 <input type="checkbox" id="isPublic" name="is_public" value="true" checked>
                 <span style="margin-left: 8px;">Make Public</span>
             </label>
+            {% endif %}
             <label class="checkbox-label"
                 style="background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 4px; border: 1px solid var(--glass-border); margin-left:10px;">
                 <input type="checkbox" id="isEncrypted" onchange="toggleEncryptionInput()">
@@ -145,6 +149,12 @@
                         🔒
                     </span>
                     {% endif %}
+                    {% if file.current_version > 1 %}
+                    <span title="Version {{ file.current_version }}"
+                        style="background: rgba(16, 185, 129, 0.2); color: #6ee7b7; padding: 4px 6px; border-radius: 4px; font-size: 0.7rem;">
+                        v{{ file.current_version }}
+                    </span>
+                    {% endif %}
                     <h4 style="font-size: 0.95rem; word-break: break-all;">{{ file.original_name }}</h4>
                 </div>
                 <p style="font-size: 0.8rem; color: var(--text-secondary);">
@@ -166,11 +176,19 @@
                     Download
                 </a>
 
+                {% if file.current_version > 1 %}
+                <button class="btn btn-sm btn-action" onclick="openHistoryModal('{{ file.id }}')" title="View History">
+                    History
+                </button>
+                {% endif %}
+
                 {% if file.owner == current_user %}
+                {% if IS_NEXUS %}
                 <button onclick="openShareModal('{{ file.id }}', '{{ file.original_name|replace('\'', '\\\'') }}')"
                     class="btn btn-sm btn-action" title="Share">
                     Share
                 </button>
+                {% endif %}
                 <form action="{{ url_for('main.delete_file', file_id=file.id) }}" method="POST" class="inline-form">
                     <button type="submit" class="btn btn-sm btn-danger"
                         onclick="return confirm('Delete this file?')">Delete</button>
@@ -231,8 +249,29 @@
         <div style="margin: 15px 0;">
             <input type="password" id="decryptPassword" placeholder="Encryption Password" class="form-input" autofocus>
         </div>
-        <p id="decryptError" style="color: #ff6b6b; display: none; margin-bottom: 10px;"></p>
         <button id="decryptBtn" class="btn btn-primary" style="width: 100%;">Decrypt & Open</button>
+    </div>
+</div>
+
+<!-- History Modal -->
+<div id="historyModal" class="modal">
+    <div class="modal-content glass-panel">
+        <span class="close-modal" onclick="closeHistory()">&times;</span>
+        <h3 id="historyTitle">File History</h3>
+        <div id="historyLoading" style="text-align:center; padding: 20px;">Loading...</div>
+        <table id="historyTable" style="width: 100%; border-collapse: collapse; display: none;">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--glass-border); text-align: left;">
+                    <th style="padding: 8px;">Ver</th>
+                    <th style="padding: 8px;">Date</th>
+                    <th style="padding: 8px;">Size</th>
+                    <th style="padding: 8px;">Action</th>
+                </tr>
+            </thead>
+            <tbody id="historyBody">
+                <!-- Injected via JS -->
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}
@@ -428,6 +467,60 @@
         if (event.target == previewModal) closePreview();
         if (event.target == document.getElementById('qrModal')) closeQR();
         if (event.target == document.getElementById('decryptModal')) closeDecrypt();
+        if (event.target == document.getElementById('historyModal')) closeHistory();
+    }
+
+    // History Logic
+    const historyModal = document.getElementById('historyModal');
+
+    function openHistoryModal(fileId) {
+        historyModal.style.display = "block";
+        document.getElementById('historyLoading').style.display = 'block';
+        document.getElementById('historyTable').style.display = 'none';
+
+        // Fetch history
+        fetch(`/file/${fileId}/history`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('historyTitle').innerText = 'History: ' + data.filename;
+                const tbody = document.getElementById('historyBody');
+                tbody.innerHTML = '';
+
+                data.history.forEach(v => {
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+
+                    let actionHtml = '';
+                    if (v.is_current) {
+                        actionHtml = '<span style="font-size:0.8rem; opacity:0.7;">Current</span>';
+                    } else {
+                        actionHtml = `
+                            <form action="/file/${fileId}/restore/${v.id}" method="POST" onsubmit="return confirm('Restore version ${v.version}? This will become the new current version.')">
+                                <button type="submit" class="btn btn-sm btn-action" style="padding: 2px 6px; font-size: 0.75rem;">Restore</button>
+                            </form>
+                        `;
+                    }
+
+                    tr.innerHTML = `
+                        <td style="padding: 10px;">v${v.version}</td>
+                        <td style="padding: 10px;">${v.date}</td>
+                        <td style="padding: 10px;">${v.size}</td>
+                        <td style="padding: 10px;">${actionHtml}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                document.getElementById('historyLoading').style.display = 'none';
+                document.getElementById('historyTable').style.display = 'table';
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('historyLoading').innerText = "Error loading history.";
+            });
+    }
+
+    function closeHistory() {
+        historyModal.style.display = "none";
     }
 
     // Drag & Drop Listeners (Preserved)

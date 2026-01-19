@@ -16,6 +16,17 @@ def create_app(config_class=Config):
     if os.path.exists(config_file):
         app.config.from_pyfile(config_file)
 
+    # CRITICAL: Force paths to AppData to ensure persistence in .exe mode
+    # This overrides any relative-path defaults from source config that might point to _MEIPASS
+    app.config['UPLOAD_FOLDER'] = os.path.join(app_data_path, 'uploads')
+    app.config['AVATAR_UPLOAD_FOLDER'] = os.path.join(app_data_path, 'uploads', 'avatars')
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app_data_path, 'instance', 'omni.db').replace('\\', '/')
+
+    # Ensure these specific persistent folders exist (just in case)
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    os.makedirs(app.config['AVATAR_UPLOAD_FOLDER'], exist_ok=True)
+    os.makedirs(os.path.dirname(app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')), exist_ok=True)
+
     # Initialize extensions
     db.init_app(app)
     bcrypt.init_app(app)
@@ -28,6 +39,15 @@ def create_app(config_class=Config):
     from app import routes, auth
     app.register_blueprint(routes.bp)
     app.register_blueprint(auth.bp, url_prefix='/auth')
+
+    # Edition Context Processor
+    @app.context_processor
+    def inject_edition():
+        return dict(
+            OMNI_EDITION=app.config.get('OMNI_EDITION', 'CORE'),
+            IS_CORE=app.config.get('OMNI_EDITION') == 'CORE',
+            IS_NEXUS=app.config.get('OMNI_EDITION') == 'NEXUS'
+        )
 
     with app.app_context():
         db.create_all()
@@ -78,6 +98,10 @@ def check_db_schema(db):
         if 'encryption_data' not in file_columns:
             print("Migrating database: Adding 'encryption_data' column to 'file' table...")
             cursor.execute("ALTER TABLE file ADD COLUMN encryption_data TEXT")
+
+        if 'current_version' not in file_columns:
+            print("Migrating database: Adding 'current_version' column to 'file' table...")
+            cursor.execute("ALTER TABLE file ADD COLUMN current_version INTEGER DEFAULT 1")
             
         # Check profile columns in user table (Phase 2)
         cursor.execute("PRAGMA table_info(user)")
@@ -94,6 +118,12 @@ def check_db_schema(db):
         if 'display_name' not in user_columns:
              print("Migrating database: Adding 'display_name' to 'user' table...")
              cursor.execute("ALTER TABLE user ADD COLUMN display_name VARCHAR(50)")
+
+        # Log database encoding for verification
+        cursor.execute("PRAGMA encoding;")
+        encoding = cursor.fetchone()[0]
+        print(f"Database orientation: SQLite @ {db_path}")
+        print(f"Database encoding: {encoding}")
 
         conn.commit()
             
