@@ -13,7 +13,7 @@
 ---
 
 ## 🔜 Next Up (v1.0 Release)
-- [ ] **File Versioning**: Keep history of file changes, restore previous versions
+- [x] **File Versioning**: Keep history of file changes, restore previous versions
 - [ ] **Shared Folders**: Collaborative spaces for multiple users
 - [ ] **Download Limits & Expiry**: Time-limited or download-count-limited share links
 - [ ] **Trash/Recycle Bin**: Soft-delete with recovery window
