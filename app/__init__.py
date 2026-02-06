@@ -74,10 +74,25 @@ def check_db_schema(db):
     if not os.path.isabs(db_path):
         db_path = os.path.join(current_app.instance_path, db_path)
     
+    # ...
+    
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         
+        # Check folder_shares table
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='folder_shares'")
+        if not cursor.fetchone():
+            print("Migrating database: Creating 'folder_shares' table...")
+            cursor.execute('''CREATE TABLE folder_shares (
+                folder_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                PRIMARY KEY (folder_id, user_id),
+                FOREIGN KEY(folder_id) REFERENCES folder (id),
+                FOREIGN KEY(user_id) REFERENCES user (id)
+            )''')
+            conn.commit()
+            
         # Check if is_public exists in folder table
         cursor.execute("PRAGMA table_info(folder)")
         columns = [column[1] for column in cursor.fetchall()]

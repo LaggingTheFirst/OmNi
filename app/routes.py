@@ -99,8 +99,9 @@ def dashboard():
     
     if folder_id:
         current_folder = Folder.query.get_or_404(folder_id)
-        # Ensure user can access this folder: Owner OR Public OR Admin
-        if current_folder.user_id != current_user.id and not current_folder.is_public and not current_user.is_admin:
+        # Ensure user can access this folder: Owner OR Public OR Admin OR Shared
+        is_shared = current_folder.shared_with.filter_by(id=current_user.id).first() is not None
+        if current_folder.user_id != current_user.id and not current_folder.is_public and not current_user.is_admin and not is_shared:
              abort(403)
              
         # Breadcrumbs (simple: just Parent -> Current)
@@ -122,12 +123,13 @@ def dashboard():
         # Admin sees ALL folders in this parent
         folders_query = Folder.query.filter_by(parent_id=folder_id)
     else:
-        # Standard user: Own folders OR Public folders
+        # Standard user: Own folders OR Public folders OR Shared Folders
         folders_query = Folder.query.filter(
             (Folder.parent_id == folder_id) &
             (
                 (Folder.user_id == current_user.id) |
-                (Folder.is_public == True)
+                (Folder.is_public == True) |
+                (Folder.shared_with.any(User.id == current_user.id))
             )
         )
 
@@ -259,13 +261,38 @@ def upload_file():
             file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
             
             try:
-                # Check if file with same name exists in same folder for this user
+                # Check permissions and existing file
                 folder_id = request.form.get('folder_id', type=int)
+                
+                # Verify folder access if folder_id is present
+                if folder_id:
+                    folder = Folder.query.get(folder_id)
+                    if not folder:
+                        flash('Target folder not found.', 'danger')
+                        continue
+                    
+                    # Access check: Owner OR Admin OR Shared
+                    is_shared = folder.shared_with.filter_by(id=current_user.id).first() is not None
+                    if folder.user_id != current_user.id and not current_user.is_admin and not is_shared:
+                        flash(f'Permission denied for folder "{folder.name}".', 'danger')
+                        continue
+
                 existing_file = File.query.filter_by(
-                    user_id=current_user.id, 
                     folder_id=folder_id, 
                     original_name=original_filename
                 ).first()
+                
+                # Only check existing_file against current user permissions if it exists
+                # If existing_file is not ours, likely we can't overwrite it unless we have some shared logic?
+                # Simplification: If 2 users have write access to shared folder, they can overwrite each other's files (collaborate).
+                if existing_file:
+                     # Check if we have permission to overwrite/version this file
+                     # Owner of file OR Admin OR Owner of Folder the file is in OR Shared Access to Folder?
+                     # Let's say: If you have Write access to folder, you can update files in it.
+                     pass
+                else:
+                     # For new file, existing_file is None, so we are good.
+                     pass
 
                 file.save(file_path)
                 enc_data = encryption_data_list[i] if i < len(encryption_data_list) else None
@@ -348,6 +375,36 @@ def create_folder():
     
     flash(f'Folder "{name}" created.', 'success')
     return redirect(url_for('main.dashboard', folder_id=parent_id if parent_id else None))
+
+@bp.route('/folder/<int:folder_id>/share', methods=['POST'])
+@login_required
+def share_folder(folder_id):
+    folder = Folder.query.get_or_404(folder_id)
+    if folder.user_id != current_user.id and not current_user.is_admin:
+        flash('You can only share folders you own.', 'danger')
+        return redirect(url_for('main.dashboard', folder_id=folder.parent_id))
+
+    username = request.form.get('username')
+    user_to_share_with = User.query.filter_by(username=username).first()
+    
+    if not user_to_share_with:
+        flash(f'User {username} not found.', 'warning')
+        return redirect(url_for('main.dashboard', folder_id=folder_id)) # Stay in folder? Or parent? Parent logic simpler.
+    
+    if user_to_share_with == current_user:
+         flash('You cannot share a folder with yourself.', 'warning')
+         return redirect(url_for('main.dashboard', folder_id=folder.parent_id))
+
+    # Check if already shared
+    if folder.shared_with.filter_by(id=user_to_share_with.id).first():
+        flash(f'Folder already shared with {username}.', 'info')
+    else:
+        folder.shared_with.append(user_to_share_with)
+        log_action('SHARE_FOLDER', f'User {current_user.username} shared folder {folder.name} with {username}', current_user)
+        db.session.commit()
+        flash(f'Folder shared with {username}.', 'success')
+        
+    return redirect(url_for('main.dashboard', folder_id=folder.parent_id))
 
 @bp.route('/file/<int:file_id>/share', methods=['POST'])
 @login_required

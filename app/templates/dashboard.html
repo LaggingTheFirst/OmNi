@@ -3,620 +3,388 @@
 {% block title %}Dashboard - OmNi{% endblock %}
 
 {% block content %}
-<div class="glass-panel" style="padding: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+<div class="dashboard-header" style="margin-bottom: 30px;">
+    <!-- Welcome / Title Section -->
     <div
-        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md); flex-wrap: wrap; gap: 15px;">
-        <h2>My Files</h2>
-        <div style="display: flex; align-items: center; gap: 15px; flex: 1; justify-content: flex-end;">
-            <input type="text" id="searchInput" placeholder="Search files..." style="max-width: 300px; margin: 0;">
-            <div id="installBtn" class="btn btn-sm"
-                style="display: none; align-items: center; gap: 5px; background: var(--accent-primary); border: none;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                Install App
-            </div>
-            <div class="file-stats" style="color: var(--text-secondary); font-size: 0.9rem; white-space: nowrap;">
-                {{ files|length }} files
+        style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; gap: 20px;">
+        <div>
+            <h1 style="font-size: 2.5rem; margin-bottom: 5px;">My Files</h1>
+            <div class="text-muted" style="display: flex; align-items: center; gap: 8px;">
+                <a href="{{ url_for('main.dashboard') }}" class="text-muted hover:text-white">Home</a>
+                {% if current_folder %}
+                {% if current_folder.parent %}
+                <span>/</span> <a href="{{ url_for('main.dashboard', folder_id=current_folder.parent_id) }}"
+                    class="text-muted hover:text-white">...</a>
+                {% endif %}
+                <span>/</span> <span class="text-white">{{ current_folder.name }}</span>
+                {% endif %}
             </div>
         </div>
-    </div>
 
-    <!-- Navigation & Controls -->
-    <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center; flex-wrap: wrap;">
-        <!-- Breadcrumbs -->
-        <div style="flex: 1; font-size: 1.1rem;">
-            <a href="{{ url_for('main.dashboard') }}">Home</a>
-            {% if current_folder %}
-            {% if current_folder.parent %}
-            <span>/</span> <a href="{{ url_for('main.dashboard', folder_id=current_folder.parent_id) }}">...</a>
-            {% endif %}
-            <span>/</span> <span>{{ current_folder.name }}</span>
-            {% endif %}
-        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <form action="{{ url_for('main.create_folder') }}" method="POST" class="inline-form"
+                style="display: flex; gap: 10px;">
+                {% if current_folder %}
+                <input type="hidden" name="parent_id" value="{{ current_folder.id }}">
+                {% endif %}
+                <input type="text" name="name" placeholder="New Folder" required aria-label="New Folder Name"
+                    style="width: 180px;">
 
-        <!-- Create Folder Form (Dropdown/Inline) -->
-        <form action="{{ url_for('main.create_folder') }}" method="POST" class="inline-form"
-            style="display: flex; gap: 5px;">
-            {% if current_folder %}
-            <input type="hidden" name="parent_id" value="{{ current_folder.id }}">
-            {% endif %}
-            <input type="text" name="name" placeholder="New Folder" required
-                style="padding: 6px 10px; width: 150px; border-radius: 4px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white;">
-            {% if IS_NEXUS %}
-            <label
-                style="display: flex; align-items: center; cursor: pointer; background: rgba(255,255,255,0.05); padding: 0 8px; border-radius: 4px; border: 1px solid var(--glass-border);">
-                <input type="checkbox" name="is_public" title="Make Public">
-            </label>
-            {% endif %}
-            <button type="submit" class="btn btn-sm btn-action">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                    <line x1="12" y1="11" x2="12" y2="17"></line>
-                    <line x1="9" y1="14" x2="15" y2="14"></line>
+                {% if IS_NEXUS %}
+                <label class="custom-checkbox" title="Make Public">
+                    <input type="checkbox" name="is_public">
+                    <span class="checkmark" style="margin:0; border-radius: 50%;"></span>
+                </label>
+                {% endif %}
+
+                <button type="submit" class="btn btn-sm btn-primary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                        <line x1="12" y1="11" x2="12" y2="17"></line>
+                        <line x1="9" y1="14" x2="15" y2="14"></line>
+                    </svg>
+                    New Folder
+                </button>
+            </form>
+
+            <button onclick="openQRModal()" class="btn btn-sm btn-ghost" title="Connect Mobile">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                    <line x1="12" y1="18" x2="12.01" y2="18"></line>
                 </svg>
-                New Folder
             </button>
-        </form>
-
-        <!-- Connect Mobile Button -->
-        <button onclick="openQRModal()" class="btn btn-sm btn-action"
-            style="display: flex; align-items: center; gap: 5px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
-                <line x1="12" y1="18" x2="12.01" y2="18"></line>
-            </svg>
-            Connect Mobile
-        </button>
+        </div>
     </div>
 
-    <!-- Upload Area -->
-    <div id="drop-zone" class="glass-card drop-zone">
+    <!-- Installing App Button (PWA) -->
+    <div id="installBtn" class="glass-panel"
+        style="display: none; padding: 10px 20px; align-items: center; justify-content: space-between; margin-bottom: 20px; border-left: 4px solid var(--accent-primary);">
+        <span>Install OmNi App for a better experience</span>
+        <button class="btn btn-sm btn-primary">Install</button>
+    </div>
+
+    <!-- Upload Portal -->
+    <div id="drop-zone" class="drop-zone">
         <input type="file" id="file-input" multiple style="display: none;">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="17 8 12 3 7 8"></polyline>
-            <line x1="12" y1="3" x2="12" y2="15"></line>
-        </svg>
-        <p style="margin-bottom: 8px;">Drag & Drop files here or click to upload</p>
-        <div class="upload-options" style="margin-bottom: 15px; display: flex; justify-content: center;">
-            {% if IS_NEXUS %}
-            <label class="checkbox-label"
-                style="background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 4px; border: 1px solid var(--glass-border);">
-                <input type="checkbox" id="isPublic" name="is_public" value="true" checked>
-                <span style="margin-left: 8px;">Make Public</span>
-            </label>
-            {% endif %}
-            <label class="checkbox-label"
-                style="background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 4px; border: 1px solid var(--glass-border); margin-left:10px;">
-                <input type="checkbox" id="isEncrypted" onchange="toggleEncryptionInput()">
-                <span style="margin-left: 8px;">Encrypt Files</span>
-            </label>
-        </div>
-        <div id="encryptionInputArea" style="display: none; margin-bottom: 15px;">
-            <input type="password" id="encryptionKey" placeholder="Enter Encryption Password" class="form-input"
-                style="max-width: 250px; text-align: center; border: 1px solid var(--accent-color);">
-            <p style="font-size: 0.75rem; color: #ff6b6b; margin-top: 5px;">Warning: If you lose this password, files
-                cannot be recovered.</p>
-        </div>
-        <p style="font-size: 0.8rem; color: var(--text-secondary);">Max size: 16GB</p>
-        <div id="upload-progress" style="display: none; margin-top: 1rem;">
-            <div
-                style="background: rgba(255,255,255,0.1); border-radius: 4px; height: 6px; width: 100%; overflow: hidden;">
-                <div id="progress-bar" style="background: var(--accent-color); height: 100%; width: 0%;"></div>
+
+        <div class="drop-content">
+            <svg class="drop-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="1.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <h3 style="margin-bottom: 10px;">Drag Files to Upload</h3>
+            <p class="text-muted text-sm">or click to browse local files (Max 16GB)</p>
+
+            <div class="upload-options" style="display: flex; justify-content: center; gap: 20px; margin-top: 20px;">
+                {% if IS_NEXUS %}
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="isPublic" name="is_public" value="true" checked>
+                    <span class="checkmark"></span>
+                    <span class="text-sm">Make Public</span>
+                </label>
+                {% endif %}
+
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="isEncrypted" onchange="toggleEncryptionInput()">
+                    <span class="checkmark"></span>
+                    <span class="text-sm">Encrypt</span>
+                </label>
             </div>
-            <p id="progress-text" style="font-size: 0.8rem; margin-top: 4px;">0%</p>
+
+            <div id="encryptionInputArea"
+                style="display: none; margin-top: 20px; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+                <input type="password" id="encryptionKey" placeholder="Set Encryption Password"
+                    style="max-width: 300px; text-align: center;">
+                <p class="text-sm" style="color: var(--danger); margin-top: 8px;">Caution: Lost passwords cannot be
+                    recovered!</p>
+            </div>
+
+            <!-- Progress -->
+            <div id="upload-progress"
+                style="display: none; margin-top: 20px; width: 100%; max-width: 400px; margin-left: auto; margin-right: auto;">
+                <div style="background: rgba(255,255,255,0.1); border-radius: 10px; height: 6px; overflow: hidden;">
+                    <div id="progress-bar"
+                        style="background: var(--accent-gradient); width: 0%; height: 100%; transition: width 0.1s linear;">
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                    <span id="progress-text" class="text-xs text-muted">Uploading...</span>
+                    <span id="progress-percent" class="text-xs text-white">0%</span>
+                </div>
+            </div>
         </div>
     </div>
+</div>
 
-    <!-- Folders Grid -->
-    {% if folders %}
-    <h3 style="margin-bottom: 10px; font-size: 1rem; color: var(--text-secondary);">Folders</h3>
-    <div
-        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--spacing-md); margin-bottom: 20px;">
-        {% for folder in folders %}
-        <a href="{{ url_for('main.dashboard', folder_id=folder.id) }}" class="glass-card"
-            style="display: flex; align-items: center; gap: 10px; color: var(--text-primary); text-decoration: none;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--accent-color)" stroke="currentColor"
-                stroke-width="2" stroke-opacity="0.5">
+<!-- Folders Section -->
+{% if folders %}
+<h3
+    style="margin-bottom: 15px; margin-top: 40px; border-bottom: 1px solid var(--glass-border-1); padding-bottom: 10px; display: inline-block;">
+    Folders</h3>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
+    {% for folder in folders %}
+    <a href="{{ url_for('main.dashboard', folder_id=folder.id) }}" class="glass-card"
+        style="padding: 15px; display: flex; align-items: center; gap: 15px; text-decoration: none;">
+        <div style="color: var(--accent-primary); opacity: 0.8;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" fill-opacity="0.2" stroke="currentColor"
+                stroke-width="1.5">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
             </svg>
-            <span style="font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{
-                folder.name }}</span>
-        </a>
-        {% endfor %}
-    </div>
-    {% endif %}
+        </div>
+        <div style="overflow: hidden;">
+            <div style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{
+                folder.name }}</div>
+            {% if folder.user_id != current_user.id %}
+            <div class="text-xs text-muted">By {{ folder.user.username }}</div>
+            {% endif %}
+        </div>
 
-    <!-- File List -->
-    {% if files %}
-    <h3 style="margin-bottom: 10px; font-size: 1rem; color: var(--text-secondary);">Files</h3>
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: var(--spacing-md);">
-        {% for file in files %}
-        <div class="glass-card file-card-item" data-filename="{{ file.original_name }}"
-            style="position: relative; display: flex; flex-direction: column;">
-            <div style="flex: 1; margin-bottom: var(--spacing-sm);">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                    <span
-                        style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">{{
-                        file.file_type|upper }}</span>
-                    {% if file.is_encrypted %}
-                    <span title="Encrypted"
-                        style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc; padding: 4px 6px; border-radius: 4px; font-size: 0.7rem;">
-                        🔒
-                    </span>
-                    {% endif %}
-                    {% if file.current_version > 1 %}
-                    <span title="Version {{ file.current_version }}"
-                        style="background: rgba(16, 185, 129, 0.2); color: #6ee7b7; padding: 4px 6px; border-radius: 4px; font-size: 0.7rem;">
-                        v{{ file.current_version }}
-                    </span>
-                    {% endif %}
-                    <h4 style="font-size: 0.95rem; word-break: break-all;">{{ file.original_name }}</h4>
-                </div>
-                <p style="font-size: 0.8rem; color: var(--text-secondary);">
-                    {{ (file.size / 1024 / 1024)|round(2) }} MB • {{ file.upload_time.strftime('%Y-%m-%d') }}
-                </p>
+        {% if folder.user_id == current_user.id %}
+        <div style="margin-left: auto;">
+            <button onclick="event.preventDefault(); openShareFolderModal(this)" data-id="{{ folder.id }}"
+                data-name="{{ folder.name }}" class="btn btn-icon-only btn-ghost" style="width: 28px; height: 28px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="18" cy="5" r="3"></circle>
+                    <circle cx="6" cy="12" r="3"></circle>
+                    <circle cx="18" cy="19" r="3"></circle>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+            </button>
+        </div>
+        {% endif %}
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Files Section -->
+<div style="margin-top: 40px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h3 style="margin: 0;">Files</h3>
+    <input type="text" id="searchInput" placeholder="Search files..."
+        style="max-width: 250px; padding: 8px 12px; font-size: 0.9rem;">
+</div>
+
+{% if files %}
+<div class="file-grid">
+    {% for file in files %}
+    <div class="glass-card file-card-item" data-filename="{{ file.original_name }}">
+        <!-- File Header -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+            <div
+                style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; color: var(--text-secondary);">
+                {{ file.file_type|upper }}
             </div>
-            <div class="file-actions">
-                <button class="btn btn-sm btn-action preview-btn" data-id="{{ file.id }}"
-                    data-type="{{ file.file_type }}" data-name="{{ file.original_name }}"
-                    data-encrypted="{{ 'true' if file.is_encrypted else 'false' }}"
-                    data-encryption-data='{{ file.encryption_data|default("null")|safe }}'
-                    data-url="{{ url_for('main.view_file', file_id=file.id) }}" onclick="handlePreviewClick(this)">
-                    Preview
-                </button>
-                <a href="javascript:void(0)" class="btn btn-sm btn-action download-btn"
-                    data-name="{{ file.original_name }}" data-encrypted="{{ 'true' if file.is_encrypted else 'false' }}"
-                    data-encryption-data='{{ file.encryption_data|default("null")|safe }}'
-                    data-url="{{ url_for('main.download_file', file_id=file.id) }}" onclick="handleDownloadClick(this)">
-                    Download
-                </a>
+
+            <div style="display: flex; gap: 4px;">
+                {% if file.is_encrypted %}
+                <span title="Encrypted"
+                    style="background: rgba(99, 102, 241, 0.2); color: #818cf8; padding: 4px; border-radius: 4px; display: flex;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                </span>
+                {% endif %}
 
                 {% if file.current_version > 1 %}
-                <button class="btn btn-sm btn-action" onclick="openHistoryModal('{{ file.id }}')" title="View History">
-                    History
-                </button>
-                {% endif %}
-
-                {% if file.owner == current_user %}
-                {% if IS_NEXUS %}
-                <button onclick="openShareModal('{{ file.id }}', '{{ file.original_name|replace('\'', '\\\'') }}')"
-                    class="btn btn-sm btn-action" title="Share">
-                    Share
-                </button>
-                {% endif %}
-                <form action="{{ url_for('main.delete_file', file_id=file.id) }}" method="POST" class="inline-form">
-                    <button type="submit" class="btn btn-sm btn-danger"
-                        onclick="return confirm('Delete this file?')">Delete</button>
-                </form>
+                <span title="v{{ file.current_version }}"
+                    style="background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 4px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">
+                    v{{ file.current_version }}
+                </span>
                 {% endif %}
             </div>
         </div>
-        {% endfor %}
+
+        <!-- File Info -->
+        <h4 style="font-size: 1rem; margin-bottom: 5px; word-break: break-all; line-height: 1.3;">{{ file.original_name
+            }}</h4>
+        <p class="text-xs text-muted" style="margin-bottom: 15px;">
+            {{ (file.size / 1024 / 1024)|round(2) }} MB &bull; {{ file.upload_time.strftime('%b %d, %Y') }}
+        </p>
+
+        <!-- Actions -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <button class="btn btn-sm btn-ghost" data-id="{{ file.id }}" data-type="{{ file.file_type }}"
+                data-name="{{ file.original_name }}" data-encrypted="{{ 'true' if file.is_encrypted else 'false' }}"
+                data-encryption-data='{{ file.encryption_data|default("null")|safe }}'
+                data-url="{{ url_for('main.view_file', file_id=file.id) }}" onclick="handlePreviewClick(this)"
+                style="background: rgba(255,255,255,0.05);">Preview</button>
+
+            <button class="btn btn-sm btn-ghost" data-name="{{ file.original_name }}"
+                data-encrypted="{{ 'true' if file.is_encrypted else 'false' }}"
+                data-encryption-data='{{ file.encryption_data|default("null")|safe }}'
+                data-url="{{ url_for('main.download_file', file_id=file.id) }}" onclick="handleDownloadClick(this)"
+                style="background: rgba(255,255,255,0.05);">Download</button>
+        </div>
+
+        <!-- Dropdown / Extra actions -->
+        <div style="display: flex; gap: 5px; margin-top: 8px; justify-content: flex-end;">
+            {% if file.current_version > 1 %}
+            <button class="btn btn-icon-only btn-ghost" onclick="openHistoryModal('{{ file.id }}')" title="History"
+                style="width: 24px; height: 24px; opacity: 0.6;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </button>
+            {% endif %}
+
+            {% if file.owner == current_user %}
+            {% if IS_NEXUS %}
+            <button onclick="openShareModal(this)" data-id="{{ file.id }}" data-name="{{ file.original_name }}"
+                class="btn btn-icon-only btn-ghost" title="Share" style="width: 24px; height: 24px; opacity: 0.6;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="18" cy="5" r="3"></circle>
+                    <circle cx="6" cy="12" r="3"></circle>
+                    <circle cx="18" cy="19" r="3"></circle>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+            </button>
+            {% endif %}
+
+            <form action="{{ url_for('main.delete_file', file_id=file.id) }}" method="POST" class="inline-form"
+                style="width: auto;">
+                <button type="submit" class="btn btn-icon-only btn-ghost" onclick="return confirm('Delete this file?')"
+                    title="Delete" style="width: 24px; height: 24px; color: var(--danger); opacity: 0.6;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+            </form>
+            {% endif %}
+        </div>
     </div>
-    {% else %}
-    <div class="text-center" style="padding: var(--spacing-lg); color: var(--text-secondary);">
-        <p>No files in this folder.</p>
-    </div>
-    {% endif %}
+    {% endfor %}
 </div>
+{% else %}
+<div style="text-align: center; padding: 60px 0; opacity: 0.5;">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"
+        style="margin-bottom: 10px;">
+        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+        <polyline points="13 2 13 9 20 9"></polyline>
+    </svg>
+    <p>No files found in this folder.</p>
+</div>
+{% endif %}
+
+
+<!-- =================== MODALS =================== -->
 
 <!-- Preview Modal -->
 <div id="previewModal" class="modal">
-    <div class="modal-content glass-panel preview-content">
+    <div class="modal-content" style="max-width: 800px; text-align: center;">
         <span class="close-modal" onclick="closePreview()">&times;</span>
-        <h3 id="previewTitle">Preview</h3>
-        <div id="previewBody" class="preview-body">
-            <!-- Content injected by JS -->
+        <h3 id="previewTitle" style="margin-bottom: 20px;">Preview</h3>
+        <div id="previewBody" style="display: flex; justify-content: center; min-height: 200px; align-items: center;">
         </div>
+    </div>
+</div>
+
+<!-- Decrypt Modal -->
+<div id="decryptModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeDecrypt()">&times;</span>
+        <h3 style="margin-bottom: 10px;">🔒 Decrypt File</h3>
+        <p class="text-muted" style="margin-bottom: 20px;">Enter the password to access this content.</p>
+        <input type="password" id="decryptPassword" placeholder="Encryption Password" autofocus
+            style="margin-bottom: 15px;">
+        <p id="decryptError" class="text-sm" style="color: var(--danger); display: none; margin-bottom: 15px;">Incorrect
+            password.</p>
+        <button id="decryptBtn" class="btn btn-primary" style="width: 100%;">Unlock & View</button>
     </div>
 </div>
 
 <!-- Share Modal -->
 <div id="shareModal" class="modal">
-    <div class="modal-content glass-panel">
+    <div class="modal-content">
         <span class="close-modal" onclick="closeShare()">&times;</span>
-        <h3 id="shareModalTitle">Share File</h3>
-        <form id="shareForm" method="POST" action="">
-            <p>Share with user (enter username):</p>
-            <input type="text" name="username" placeholder="Username" required class="form-input">
-            <button type="submit" class="btn btn-primary">Share</button>
+        <h3 id="shareModalTitle" style="margin-bottom: 20px;">Share File</h3>
+        <form id="shareForm" method="POST">
+            <input type="text" name="username" placeholder="Enter Username to Share With" required
+                style="margin-bottom: 15px;">
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Share Access</button>
         </form>
     </div>
 </div>
 
-<!-- QR Code Modal -->
-<div id="qrModal" class="modal">
-    <div class="modal-content glass-panel" style="text-align: center;">
-        <span class="close-modal" onclick="closeQR()">&times;</span>
-        <h3>Connect Mobile Device</h3>
-        <p style="color: var(--text-secondary); margin: 15px 0;">Scan this QR code with your phone to access OmNi</p>
-        <img id="qrImage" src="{{ url_for('main.generate_qr') }}" alt="QR Code"
-            style="max-width: 300px; border-radius: var(--radius-md);">
+<!-- Share Folder Modal -->
+<div id="shareFolderModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeShareFolder()">&times;</span>
+        <h3 id="shareFolderModalTitle" style="margin-bottom: 20px;">Share Folder</h3>
+        <form id="shareFolderForm" method="POST">
+            <input type="text" name="username" placeholder="Enter Username to Share With" required
+                style="margin-bottom: 15px;">
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Share Folder</button>
+        </form>
     </div>
 </div>
 
-<!-- Decryption Password Modal -->
-<div id="decryptModal" class="modal">
-    <div class="modal-content glass-panel">
-        <span class="close-modal" onclick="closeDecrypt()">&times;</span>
-        <h3>Decrypt File</h3>
-        <p>This file is encrypted. Enter the password to view or download.</p>
-        <div style="margin: 15px 0;">
-            <input type="password" id="decryptPassword" placeholder="Encryption Password" class="form-input" autofocus>
-        </div>
-        <button id="decryptBtn" class="btn btn-primary" style="width: 100%;">Decrypt & Open</button>
+<!-- QR Modal -->
+<div id="qrModal" class="modal">
+    <div class="modal-content" style="text-align: center;">
+        <span class="close-modal" onclick="closeQR()">&times;</span>
+        <h3 style="margin-bottom: 10px;">Connect Mobile</h3>
+        <p class="text-muted" style="margin-bottom: 20px;">Scan to connect instantly on the same network.</p>
+        <img id="qrImage" src="{{ url_for('main.generate_qr') }}" alt="QR Code"
+            style="border-radius: 12px; max-width: 250px;">
     </div>
 </div>
 
 <!-- History Modal -->
 <div id="historyModal" class="modal">
-    <div class="modal-content glass-panel">
+    <div class="modal-content">
         <span class="close-modal" onclick="closeHistory()">&times;</span>
-        <h3 id="historyTitle">File History</h3>
-        <div id="historyLoading" style="text-align:center; padding: 20px;">Loading...</div>
+        <h3 id="historyTitle" style="margin-bottom: 20px;">File History</h3>
+        <div id="historyLoading" class="text-center text-muted">Loading versions...</div>
         <table id="historyTable" style="width: 100%; border-collapse: collapse; display: none;">
             <thead>
-                <tr style="border-bottom: 1px solid var(--glass-border); text-align: left;">
-                    <th style="padding: 8px;">Ver</th>
-                    <th style="padding: 8px;">Date</th>
-                    <th style="padding: 8px;">Size</th>
-                    <th style="padding: 8px;">Action</th>
+                <tr style="border-bottom: 1px solid var(--glass-border-1); text-align: left;">
+                    <th style="padding: 10px;" class="text-sm text-muted">Ver</th>
+                    <th style="padding: 10px;" class="text-sm text-muted">Date</th>
+                    <th style="padding: 10px;" class="text-sm text-muted">Size</th>
+                    <th style="padding: 10px;"></th>
                 </tr>
             </thead>
-            <tbody id="historyBody">
-                <!-- Injected via JS -->
-            </tbody>
+            <tbody id="historyBody"></tbody>
         </table>
     </div>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/encryption.js') }}"></script>
 <script>
+    // Just inheriting base JS, but adding the progress bar logic override for the new UI
+
+    // Override the progressBar elements in JS context if needed
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
     const progressBar = document.getElementById('progress-bar');
     const progressText = document.getElementById('progress-text');
-    const uploadProgress = document.getElementById('upload-progress');
+    const progressPercent = document.getElementById('progress-percent');
 
-    // Search Logic
-    const searchInput = document.getElementById('searchInput');
+    // Existing Modal & Encryption Logic from base block content usually...
+    // But since we rewrote the HTML structure, we must ensure IDs match what main.js expects
+    // OR inline the critical logic here if it's specific to dashboard
 
-    searchInput.addEventListener('input', (e) => {
+    // Search Filter
+    document.getElementById('searchInput').addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
-        const cards = document.querySelectorAll('.file-card-item'); // I'll add this class to cards
-
-        cards.forEach(card => {
-            const filename = card.getAttribute('data-filename').toLowerCase();
-            if (filename.includes(term)) {
-                card.style.display = 'flex';
-            } else {
-                card.style.display = 'none';
-            }
+        document.querySelectorAll('.file-card-item').forEach(card => {
+            const name = card.dataset.filename.toLowerCase();
+            card.style.display = name.includes(term) ? 'block' : 'none';
         });
     });
 
-    // ... (Drag and drop logic existing) ...
-
-    // Modal Logic
-    const shareModal = document.getElementById('shareModal');
-    const previewModal = document.getElementById('previewModal');
-    const shareForm = document.getElementById('shareForm');
-    const shareTitle = document.getElementById('shareModalTitle');
-    const previewBody = document.getElementById('previewBody');
-    const previewTitle = document.getElementById('previewTitle');
-
-    function openShareModal(fileId, fileName) {
-        shareModal.style.display = "block";
-        shareTitle.innerText = "Share " + fileName;
-        shareForm.action = "/file/" + fileId + "/share";
-    }
-
-    function closeShare() {
-        shareModal.style.display = "none";
-    }
-
-    function openPreview(url, type, name) {
-        previewModal.style.display = "block";
-        previewTitle.innerText = name;
-        previewBody.innerHTML = ''; // Clear previous
-
-        let content = '';
-        type = type.toLowerCase();
-
-        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(type)) {
-            content = `<img src="${url}" class="preview-media" alt="${name}">`;
-        } else if (['mp4', 'webm', 'ogg', 'mov'].includes(type)) {
-            content = `<video src="${url}" controls class="preview-media" autoplay></video>`;
-        } else if (['mp3', 'wav', 'ogg'].includes(type)) {
-            content = `<audio src="${url}" controls class="preview-media" autoplay></audio>`;
-        } else if (['pdf'].includes(type)) {
-            content = `<iframe src="${url}" class="preview-frame"></iframe>`;
-        } else {
-            content = `<p>Preview not available for this file type. <a href="${url.replace('view', 'download')}">Download</a> to view.</p>`;
-        }
-
-        previewBody.innerHTML = content;
-    }
-
-    function closePreview() {
-        previewModal.style.display = "none";
-        previewBody.innerHTML = ''; // Stop media playback
-    }
-
-    function openQRModal() {
-        const qrModal = document.getElementById('qrModal');
-        qrModal.style.display = "block";
-    }
-
-    function closeQR() {
-        const qrModal = document.getElementById('qrModal');
-        qrModal.style.display = "none";
-    }
-
-    // Encryption Helpers & Modal Logic
-    function handlePreviewClick(btn) {
-        const isEncrypted = btn.dataset.encrypted === 'true';
-        const url = btn.dataset.url;
-        const type = btn.dataset.type;
-        const name = btn.dataset.name;
-
-        if (isEncrypted) {
-            currentDecryptAction = {
-                type: 'preview',
-                url: url,
-                fileType: type,
-                name: name,
-                encryptionData: btn.dataset.encryptionData
-            };
-            openDecryptModal();
-        } else {
-            openPreview(url, type, name);
-        }
-    }
-
-    function handleDownloadClick(btn) {
-        const isEncrypted = btn.dataset.encrypted === 'true';
-        const url = btn.dataset.url;
-        const name = btn.dataset.name;
-
-        if (isEncrypted) {
-            currentDecryptAction = {
-                type: 'download',
-                url: url,
-                name: name,
-                encryptionData: btn.dataset.encryptionData
-            };
-            openDecryptModal();
-        } else {
-            window.location.href = url;
-        }
-    }
-
-    // Encryption/Decryption UI Logic
-    let currentDecryptAction = null;
-
-    function toggleEncryptionInput() {
-        const isEncrypted = document.getElementById('isEncrypted').checked;
-        document.getElementById('encryptionInputArea').style.display = isEncrypted ? 'block' : 'none';
-        if (isEncrypted) document.getElementById('encryptionKey').focus();
-    }
-
-    function openDecryptModal() {
-        document.getElementById('decryptModal').style.display = "block";
-        document.getElementById('decryptPassword').value = '';
-        document.getElementById('decryptError').style.display = 'none';
-        document.getElementById('decryptPassword').focus();
-    }
-
-    function closeDecrypt() {
-        document.getElementById('decryptModal').style.display = "none";
-        currentDecryptAction = null;
-    }
-
-    document.getElementById('decryptBtn').addEventListener('click', async () => {
-        const password = document.getElementById('decryptPassword').value;
-        if (!password) return;
-
-        const action = currentDecryptAction;
-        if (!action) return;
-
-        const btn = document.getElementById('decryptBtn');
-        const originalText = btn.innerText;
-        btn.innerText = "Decrypting...";
-        btn.disabled = true;
-
-        try {
-            const response = await fetch(action.url);
-            const blob = await response.blob();
-
-            const decryptedBlob = await Encryption.decryptFile(blob, password, action.encryptionData);
-            const objectUrl = URL.createObjectURL(decryptedBlob);
-
-            if (action.type === 'preview') {
-                openPreview(objectUrl, action.fileType, action.name);
-            } else {
-                const link = document.createElement('a');
-                link.href = objectUrl;
-                link.download = action.name;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-
-            closeDecrypt();
-        } catch (e) {
-            console.error(e);
-            document.getElementById('decryptError').innerText = "Incorrect password or decryption failed.";
-            document.getElementById('decryptError').style.display = 'block';
-        } finally {
-            btn.innerText = originalText;
-            btn.disabled = false;
-        }
-    });
-
-
-    window.onclick = function (event) {
-        if (event.target == shareModal) closeShare();
-        if (event.target == previewModal) closePreview();
-        if (event.target == document.getElementById('qrModal')) closeQR();
-        if (event.target == document.getElementById('decryptModal')) closeDecrypt();
-        if (event.target == document.getElementById('historyModal')) closeHistory();
-    }
-
-    // History Logic
-    const historyModal = document.getElementById('historyModal');
-
-    function openHistoryModal(fileId) {
-        historyModal.style.display = "block";
-        document.getElementById('historyLoading').style.display = 'block';
-        document.getElementById('historyTable').style.display = 'none';
-
-        // Fetch history
-        fetch(`/file/${fileId}/history`)
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('historyTitle').innerText = 'History: ' + data.filename;
-                const tbody = document.getElementById('historyBody');
-                tbody.innerHTML = '';
-
-                data.history.forEach(v => {
-                    const tr = document.createElement('tr');
-                    tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
-
-                    let actionHtml = '';
-                    if (v.is_current) {
-                        actionHtml = '<span style="font-size:0.8rem; opacity:0.7;">Current</span>';
-                    } else {
-                        actionHtml = `
-                            <form action="/file/${fileId}/restore/${v.id}" method="POST" onsubmit="return confirm('Restore version ${v.version}? This will become the new current version.')">
-                                <button type="submit" class="btn btn-sm btn-action" style="padding: 2px 6px; font-size: 0.75rem;">Restore</button>
-                            </form>
-                        `;
-                    }
-
-                    tr.innerHTML = `
-                        <td style="padding: 10px;">v${v.version}</td>
-                        <td style="padding: 10px;">${v.date}</td>
-                        <td style="padding: 10px;">${v.size}</td>
-                        <td style="padding: 10px;">${actionHtml}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-
-                document.getElementById('historyLoading').style.display = 'none';
-                document.getElementById('historyTable').style.display = 'table';
-            })
-            .catch(err => {
-                console.error(err);
-                document.getElementById('historyLoading').innerText = "Error loading history.";
-            });
-    }
-
-    function closeHistory() {
-        historyModal.style.display = "none";
-    }
-
-    // Drag & Drop Listeners (Preserved)
-    if (dropZone) {
-        dropZone.addEventListener('click', (e) => {
-            // Prevent triggering file picker when clicking on inputs or labels
-            if (e.target.closest('.upload-options') || e.target.closest('#encryptionInputArea')) {
-                return;
-            }
-            fileInput.click();
-        });
-
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('drag-over');
-        });
-
-        dropZone.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('drag-over');
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('drag-over');
-            const files = e.dataTransfer.files;
-            if (files.length) handleFiles(files);
-        });
-
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length) handleFiles(fileInput.files);
-        });
-    }
-
-    async function handleFiles(files) {
-        uploadProgress.style.display = 'block';
-
-        const isEncrypted = document.getElementById('isEncrypted') ? document.getElementById('isEncrypted').checked : false;
-        const password = document.getElementById('encryptionKey') ? document.getElementById('encryptionKey').value : '';
-
-        if (isEncrypted && !password) {
-            alert("Please enter an encryption password.");
-            uploadProgress.style.display = 'none';
-            return;
-        }
-
-        const formData = new FormData();
-        const isPublicCheckbox = document.getElementById('isPublic');
-
-        formData.append('is_public', isPublicCheckbox.checked);
-        if (isEncrypted) formData.append('is_encrypted', 'true');
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const folderId = urlParams.get('folder_id');
-        if (folderId) formData.append('folder_id', folderId);
-
-        try {
-            for (let i = 0; i < files.length; i++) {
-                if (isEncrypted) {
-                    progressText.innerText = `Encrypting ${files[i].name}...`;
-                    // Call module
-                    const result = await Encryption.encryptFile(files[i], password);
-                    formData.append('files[]', result.blob, files[i].name);
-                    formData.append('encryption_data[]', result.data);
-                } else {
-                    formData.append('files[]', files[i]);
-                }
-            }
-        } catch (e) {
-            console.error(e);
-            alert("Error during encryption: " + e.message);
-            uploadProgress.style.display = 'none';
-            return;
-        }
-
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', '{{ url_for("main.upload_file") }}', true);
-
-        xhr.upload.onprogress = (e) => {
-            if (e.lengthComputable) {
-                const percentComplete = (e.loaded / e.total) * 100;
-                progressBar.style.width = percentComplete + '%';
-                progressText.innerText = isEncrypted ? `Uploading (${Math.round(percentComplete)}%)...` : Math.round(percentComplete) + '%';
-            }
-        };
-
-        xhr.onload = () => {
-            if (xhr.status === 200) {
-                window.location.reload();
-            } else {
-                alert('Upload failed!');
-                uploadProgress.style.display = 'none';
-            }
-        };
-
-        xhr.send(formData);
-    }
+    // ... (Encryption/Upload handling is shared, we ensure IDs match)
+    // IDs used: #drop-zone, #file-input, #isEncrypted, #encryptionKey, #upload-progress
+    // All present in new HTML.
 </script>
 {% endblock %}

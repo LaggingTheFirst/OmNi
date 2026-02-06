@@ -1,4 +1,4 @@
-⚠️ OmNi is currently in Beta (v1.0.2). We are actively squashing bugs and optimizing the UI.
+🎉 OmNi is now in v1.0 (Official Release)! Stable and optimized.
 
 # OmNi File Sharer 🚀
 
@@ -19,6 +19,9 @@ OmNi is a self-hosted, local network file-sharing application designed for speed
   - **PWA Support**: Install as a native-like app.
   - **QR Connection**: Scan to connect instantly—no manual IP entry.
 - **🛡️ Admin Suite**: Full visibility, activity logs, and user management.
+- **💎 Editions**:
+  - **Core**: Lightweight, single-user focus (Personal).
+  - **Nexus** (Default): Full-featured, multi-user, social sharing (Team/Office).
 
 ## 🛠️ Quick Start
 
@@ -34,6 +37,19 @@ pip install -r requirements.txt
 python run.py
 ```
 Access at `http://localhost:5000` or your local IP (e.g., `192.168.1.5:5000`).
+
+### 3. Switch Editions (Optional)
+OmNi defaults to **Nexus** (Multi-user). To run in **Core** (Personal) mode:
+#### Linux/Mac:
+```bash
+export OMNI_EDITION=CORE
+python run.py
+```
+#### Windows (PowerShell):
+```powershell
+$env:OMNI_EDITION="CORE"
+python run.py
+```
 
 > [!IMPORTANT]
 > **First Step**: Change default admin credentials (`admin`/`admin`) in `config.py`.

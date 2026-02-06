@@ -12,6 +12,12 @@ file_shares = db.Table('file_shares',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True)
 )
 
+# Association table for folder sharing
+folder_shares = db.Table('folder_shares',
+    db.Column('folder_id', db.Integer, db.ForeignKey('folder.id'), primary_key=True),
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True)
+)
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
@@ -32,8 +38,6 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return f"User('{self.username}', 'Admin: {self.is_admin}')"
 
-
-
 class Folder(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -45,6 +49,11 @@ class Folder(db.Model):
     user = db.relationship('User', backref='folders', lazy=True)
     parent = db.relationship('Folder', remote_side=[id], backref='subfolders', lazy=True)
     files = db.relationship('File', backref='folder', lazy=True, cascade="all, delete-orphan")
+    
+    shared_with = db.relationship('User', secondary=folder_shares, backref=db.backref('shared_folders', lazy='dynamic'), lazy='dynamic')
+
+    def __repr__(self):
+        return f"Folder('{self.name}')"
 
     def __repr__(self):
         return f"Folder('{self.name}')"
