@@ -5,6 +5,8 @@
 OmNi is a self-hosted, local network file-sharing application designed for speed, privacy, and simplicity. Built with Python (Flask) and a modern glassmorphism UI.
 
 ![OmNi Dashboard](screenshots/dashboard.png)
+![OmNi Admin](screenshots/admin.png)
+
 
 ## ✨ Features
 
@@ -64,7 +66,9 @@ Before exposing OmNi beyond your local machine, **you must**:
 4. **Firewall rules** — only expose the port to trusted networks
 
 > [!CAUTION]
-> OmNi is designed for **trusted local networks**. Without the above steps, do not expose it to the public internet. Consider adding your own auth layer (VPN, Cloudflare Tunnel, etc.) for remote access.
+> OmNi is designed for **trusted local networks**. Without the above steps, do not expose it to the public internet. 
+> 
+> **Highly Recommended**: Read our detailed [Remote Access Guide](REMOTE_ACCESS.md) for secure setup instructions using Cloudflare Tunnels (no port forwarding required).
 
 ## 📦 Deployment & Extras
 
