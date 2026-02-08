@@ -29,6 +29,8 @@
 - [ ] **Guest Uploads**: Allow anonymous uploads to specific folders
 - [ ] **Themes & Customization**: User-selectable UI themes
 - [ ] **Plugin System**: Extend functionality with community add-ons
+- [ ] **mDNS Discovery**: Auto-discover OmNi servers on local network (access via `omni.local` instead of IP)
+- [ ] **OmNi Client App**: Standalone client that remembers server address—no IP entry after first setup
 
 ---
 
