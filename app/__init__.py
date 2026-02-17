@@ -3,6 +3,7 @@ from flask import Flask
 from config import Config
 from app.extensions import db, bcrypt, login_manager
 from app.setup_handlers import ensure_app_structure
+from flask import redirect, url_for, request
 
 def create_app(config_class=Config):
     # 1. Run the setup handler FIRST to ensure folders/config exist in AppData
@@ -36,9 +37,22 @@ def create_app(config_class=Config):
     config_class.init_app(app)
 
     # Register Blueprints / Routes
-    from app import routes, auth
+    from app import routes, auth, setup
     app.register_blueprint(routes.bp)
     app.register_blueprint(auth.bp, url_prefix='/auth')
+    app.register_blueprint(setup.bp)
+
+    # Global Setup Check
+    @app.before_request
+    def check_setup():
+        # Allow access to setup, static files, and icons without redirection
+        if request.endpoint and 'setup' in request.endpoint:
+            return
+        if request.path.startswith('/static') or request.path.endswith('.ico') or request.path.endswith('.json'):
+            return
+        
+        if not app.config.get('SETUP_COMPLETE', False):
+            return redirect(url_for('setup.index'))
 
     # Edition Context Processor
     @app.context_processor

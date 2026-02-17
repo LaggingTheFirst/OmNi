@@ -15,7 +15,6 @@ OmNi is a self-hosted, local network file-sharing application designed for speed
   - **E2EE**: Client-side encryption before upload (you hold the password).
   - **Privacy Control**: Mark files/folders as Public or Private.
   - **User Profiles**: Custom bios, display names, and avatars.
-- **🖥️ Smart Organization**: Automatic sorting into logical folders (Movies, Music, Docs, etc.).
 - **🌏 Global Reach**: Full Unicode support for multi-language filenames (Korean, Chinese, etc.).
 - **📱 Mobile-Ready**:
   - **PWA Support**: Install as a native-like app.
@@ -58,23 +57,40 @@ python run.py
 
 ## 🔐 Security Checklist
 
+OmNi now features an **Automatic Setup Wizard** to help you secure your instance on first run.
+
 Before exposing OmNi beyond your local machine, **you must**:
 
-1. **Change `SECRET_KEY`** in `config.py` — use a random 32+ character string
-2. **Change default admin password** — don't leave `admin`/`admin`
-3. **Use HTTPS** — set up a reverse proxy (nginx/Caddy) with SSL for remote access
-4. **Firewall rules** — only expose the port to trusted networks
+1. **Complete the Setup Wizard** — This will guide you through setting a secure `SECRET_KEY` and admin credentials.
+2. **Use HTTPS** — set up a reverse proxy (nginx/Caddy) with SSL for remote access.
+3. **Firewall rules** — only expose the port to trusted networks (or use a Cloudflare Tunnel).
 
 > [!CAUTION]
 > OmNi is designed for **trusted local networks**. Without the above steps, do not expose it to the public internet. 
 > 
 > **Highly Recommended**: Read our detailed [Remote Access Guide](REMOTE_ACCESS.md) for secure setup instructions using Cloudflare Tunnels (no port forwarding required).
 
+## 📁 Custom Upload Folder
+
+By default, uploaded files are stored in `./uploads/`. To use a different location, edit `config.py`:
+
+```python
+# In config.py, change UPLOAD_FOLDER:
+UPLOAD_FOLDER = 'D:/MyFiles/OmNi_Uploads'  # Windows example
+# UPLOAD_FOLDER = '/mnt/storage/omni'      # Linux example
+```
+
+Or set it via environment variable:
+```bash
+export UPLOAD_FOLDER=/path/to/your/folder
+```
+
 ## 📦 Deployment & Extras
 
-- **🐳 Docker**: `docker-compose up -d`
-- **🪟 Windows (.exe)**: Run `.\build_exe.ps1` to create a standalone binary in `dist/`.
-- **🌍 Remote Access**: Check the [Remote Access Guide](REMOTE_ACCESS.md).
+- **🐳 Docker**: `docker compose up -d --build`
+- **🪟 Windows (.exe)**: [Download OmNi.exe](https://codeberg.org/lagging/OmNi/releases/download/v1.0.0-/OmNi.exe) or build yourself with `.\build_exe.ps1`
+- **🌍 Remote Access**: Check the [Remote Access Guide](https://codeberg.org/lagging/OmNi/src/branch/main/REMOTE_ACCESS.md)
+- **🗺️ Roadmap**: See what's coming in the [Roadmap](https://codeberg.org/lagging/OmNi/src/branch/main/ROADMAP.md)
 
 ## 🤝 Contributing & Support
 

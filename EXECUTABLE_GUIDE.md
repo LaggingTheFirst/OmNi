@@ -21,11 +21,9 @@
 
 ### Configuration
 
+- **First Run:** On the first run, OmNi will launch a **Security Setup Wizard**. This wizard guides you through generating a secure `SECRET_KEY` and creating your custom admin account.
 - **Config Location:** `%APPDATA%\OmNi\config.py` (Windows)
-  - *Note: On Linux/macOS, the path would be `~/.config/omni/config.py` but you must build a native binary first.*
-
-- **First Run:** The config file is automatically created in the user's appdata directory on first run.
-- **Customization:** Users can edit the config file directly for custom settings.
+- **Customization:** After the initial setup, you can still edit the config file directly for advanced settings.
 
 ### Customizing the Executable
 
