@@ -62,45 +62,13 @@ window.handlePreviewClick = function (btn) {
 window.handleDownloadClick = function (btn) {
     const isEncrypted = btn.dataset.encrypted === 'true';
     const url = btn.dataset.url;
-    const fileName = btn.dataset.name || 'download';
 
-    // In desktop app, open uploads folder instead of downloading
-    // (Host already has the files locally)
-    if (window.pywebview && window.pywebview.api) {
-        window.pywebview.api.open_uploads_folder();
-        return;
-    }
-
-    // In browser (remote clients), trigger normal download
     if (isEncrypted) {
-        openDecryptModal('download', { url, fileName });
+        openDecryptModal('download', { url });
     } else {
-        triggerDownload(url, fileName);
+        window.location.href = url;
     }
 };
-
-/**
- * Trigger a file download.
- * Uses pywebview Python API if running in desktop app, otherwise uses anchor click.
- * @param {string} url 
- * @param {string} fileName 
- */
-function triggerDownload(url, fileName) {
-    // Check if running in pywebview desktop app
-    if (window.pywebview && window.pywebview.api) {
-        // Use Python API to open in system browser
-        window.pywebview.api.download_file(url);
-    } else {
-        // Standard browser download via hidden anchor
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    }
-}
 
 // ========================================
 // Modal Management
@@ -237,8 +205,7 @@ document.getElementById('decryptBtn')?.addEventListener('click', function () {
             closeModal('decryptModal');
 
             if (pendingDecryptAction.type === 'download') {
-                // Use triggerDownload for better pywebview compatibility
-                triggerDownload(pendingDecryptAction.data.url + '?key=' + encodeURIComponent(password), pendingDecryptAction.data.fileName || 'download');
+                window.location.href = pendingDecryptAction.data.url + '?key=' + encodeURIComponent(password);
                 // Note: sending password in query param is insecure, but this is legacy behavior matching existing app or needs refactor.
                 // If the app uses client-side decryption, we should download the blob, decrypt in JS, and save.
                 // For now, retaining the simple flow to fix UI errors.
@@ -260,27 +227,13 @@ document.getElementById('decryptBtn')?.addEventListener('click', function () {
 // ========================================
 
 function loadPreviewContent(url, type, container) {
-    // Categorize file type from extension
-    const imageTypes = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'ico'];
-    const videoTypes = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'];
-    const audioTypes = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'];
-    const pdfTypes = ['pdf'];
-
-    const ext = type.toLowerCase();
-    let category = 'unknown';
-
-    if (imageTypes.includes(ext)) category = 'image';
-    else if (videoTypes.includes(ext)) category = 'video';
-    else if (audioTypes.includes(ext)) category = 'audio';
-    else if (pdfTypes.includes(ext)) category = 'pdf';
-
-    if (category === 'image') {
+    if (type === 'image') {
         container.innerHTML = `<img src="${url}" style="max-width: 100%; max-height: 70vh; border-radius: 8px;">`;
-    } else if (category === 'video') {
+    } else if (type === 'video') {
         container.innerHTML = `<video controls autoplay style="max-width: 100%; max-height: 70vh; border-radius: 8px;"><source src="${url}"></video>`;
-    } else if (category === 'audio') {
+    } else if (type === 'audio') {
         container.innerHTML = `<audio controls autoplay><source src="${url}"></audio>`;
-    } else if (category === 'pdf') {
+    } else if (type === 'pdf') {
         container.innerHTML = `<iframe src="${url}" style="width: 100%; height: 70vh; border: none; border-radius: 8px;"></iframe>`;
     } else {
         container.innerHTML = `<div class="text-center"><p class="mb-4">Preview not available for this file type.</p><a href="${url}" class="btn btn-primary">Download File</a></div>`;

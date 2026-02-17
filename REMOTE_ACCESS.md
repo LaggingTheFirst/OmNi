@@ -42,19 +42,3 @@ Your app is now accessible at `https://omni.yourdomain.com`!
 
 ### Security Note
 Since your app is now on the public internet, ensure you have set a **Strong Admin Password** in `config.py` (or Docker environment variables).
-
----
-
-## ❓ Security FAQ
-
-### Is it safe to expose OmNi to the internet?
-OmNi is built with security in mind (E2EE, Argon2 hashing, secure session cookies), but exposing **any** app to the public web carries risk. We recommend using HTTPS (Cloudflare Tunnel handles this automatically) and strong passwords.
-
-### What is a "Reverse Proxy"?
-Imagine it as a security guard at the gate. A reverse proxy (like Nginx, Caddy, or Cloudflare Tunnel) sits between the user and your app, handling encryption (SSL) and filtering dangerous requests.
-
-### Do I need to open ports on my router?
-If you use **Cloudflare Tunnel**, no! It creates an outbound connection from your machine to Cloudflare, so you don't need to touch your router's firewall settings.
-
-### What if I only want family to access it?
-You can use a **VPN** like **Tailscale** or **ZeroTier**. These create a "private room" on the internet that only your invited devices can enter. If you use a VPN, you don't even need a public URL—you just use the VPN IP of your hosting machine.
