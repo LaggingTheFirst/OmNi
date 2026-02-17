@@ -6,6 +6,7 @@ class Config:
 
     # Security
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-key-change-this-in-prod'
+    SETUP_COMPLETE = False
     
     # Database
     basedir = os.path.abspath(os.path.dirname(__file__))

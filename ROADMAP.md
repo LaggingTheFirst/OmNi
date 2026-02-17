@@ -9,6 +9,7 @@
 - Mobile-responsive PWA with QR connection
 - Admin dashboard (logs, user management)
 - Docker & standalone `.exe` deployment
+- Security Setup Wizard (Guided first-run configuration)
 
 ---
 

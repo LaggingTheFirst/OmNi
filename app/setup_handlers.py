@@ -53,6 +53,9 @@ PORT = 5000
 ADMIN_USERNAME = 'admin'
 ADMIN_PASSWORD = 'admin'
 
+# Setup Status
+SETUP_COMPLETE = False
+
 # Database & Uploads (Best left alone to ensure persistence)
 # Paths are automatically handled by the app to point to this folder.
 """

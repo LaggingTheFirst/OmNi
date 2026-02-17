@@ -57,12 +57,13 @@ python run.py
 
 ## 🔐 Security Checklist
 
+OmNi now features an **Automatic Setup Wizard** to help you secure your instance on first run.
+
 Before exposing OmNi beyond your local machine, **you must**:
 
-1. **Change `SECRET_KEY`** in `config.py` — use a random 32+ character string
-2. **Change default admin password** — don't leave `admin`/`admin`
-3. **Use HTTPS** — set up a reverse proxy (nginx/Caddy) with SSL for remote access
-4. **Firewall rules** — only expose the port to trusted networks
+1. **Complete the Setup Wizard** — This will guide you through setting a secure `SECRET_KEY` and admin credentials.
+2. **Use HTTPS** — set up a reverse proxy (nginx/Caddy) with SSL for remote access.
+3. **Firewall rules** — only expose the port to trusted networks (or use a Cloudflare Tunnel).
 
 > [!CAUTION]
 > OmNi is designed for **trusted local networks**. Without the above steps, do not expose it to the public internet. 
@@ -86,7 +87,7 @@ export UPLOAD_FOLDER=/path/to/your/folder
 
 ## 📦 Deployment & Extras
 
-- **🐳 Docker**: `docker-compose up -d`
+- **🐳 Docker**: `docker compose up -d --build`
 - **🪟 Windows (.exe)**: [Download OmNi.exe](https://codeberg.org/lagging/OmNi/releases/download/v1.0.0-/OmNi.exe) or build yourself with `.\build_exe.ps1`
 - **🌍 Remote Access**: Check the [Remote Access Guide](https://codeberg.org/lagging/OmNi/src/branch/main/REMOTE_ACCESS.md)
 - **🗺️ Roadmap**: See what's coming in the [Roadmap](https://codeberg.org/lagging/OmNi/src/branch/main/ROADMAP.md)
