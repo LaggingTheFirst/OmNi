@@ -28,7 +28,7 @@ OmNi is a self-hosted, local network file-sharing application designed for speed
 
 ### 1. Installation
 ```bash
-git clone https://codeberg.org/lagging/omni.git && cd omni
+git clone https://github.com/laggingTheFirst /omni.git && cd omni
 python -m venv venv && source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
