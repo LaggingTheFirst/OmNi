@@ -3,7 +3,7 @@
 block_cipher = None
 
 a = Analysis(
-    ['desktop_run.py'],
+    ['main_exe.py'],
     pathex=[],
     binaries=[],
     datas=[
@@ -21,10 +21,6 @@ a = Analysis(
         'dotenv',
         'qrcode',
         'PIL',
-        'webview',
-        'clr_loader',
-        'pythonnet',
-        'bottle',
     ],
     hookspath=[],
     hooksconfig={},
@@ -51,7 +47,7 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,
+    console=True,
     disable_windowed_traceback=False,
     target_arch=None,
     codesign_identity=None,

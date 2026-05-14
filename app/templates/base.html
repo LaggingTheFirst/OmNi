@@ -80,18 +80,6 @@
         {% block content %}{% endblock %}
     </div>
 
-    <!-- Footer with Links -->
-    <footer style="text-align: center; padding: 20px 0; margin-top: 40px; opacity: 0.6; font-size: 0.85rem;">
-        <a href="https://codeberg.org/lagging/OmNi" target="_blank"
-            style="color: var(--text-secondary); margin: 0 10px;">Codeberg</a>
-        <span style="color: var(--text-muted);">•</span>
-        <a href="https://codeberg.org/lagging/OmNi/src/branch/main/REMOTE_ACCESS.md" target="_blank"
-            style="color: var(--text-secondary); margin: 0 10px;">Remote Access</a>
-        <span style="color: var(--text-muted);">•</span>
-        <a href="https://codeberg.org/lagging/OmNi/src/branch/main/ROADMAP.md" target="_blank"
-            style="color: var(--text-secondary); margin: 0 10px;">Roadmap</a>
-    </footer>
-
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% block extra_js %}{% endblock %}
 </body>

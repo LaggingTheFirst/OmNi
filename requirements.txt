@@ -6,6 +6,3 @@ Flask-Login==0.6.3
 python-dotenv==1.0.0
 pyinstaller==6.4.0
 qrcode[pil]==8.0
-pywebview==6.1
-gunicorn==21.2.0
-
